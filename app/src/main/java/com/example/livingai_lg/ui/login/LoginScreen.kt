@@ -1,8 +1,9 @@
-
 package com.example.livingai_lg.ui.login
 
+import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.* 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -10,9 +11,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -24,6 +24,8 @@ import com.example.livingai_lg.ui.theme.*
 
 @Composable
 fun LoginScreen(navController: NavController) {
+    val context = LocalContext.current
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -33,12 +35,7 @@ fun LoginScreen(navController: NavController) {
                 )
             )
     ) {
-        // Decorative elements
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // ... (decorative elements)
-        }
+        // Decorative elements...
 
         Column(
             modifier = Modifier
@@ -99,6 +96,8 @@ fun LoginScreen(navController: NavController) {
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(48.dp))
+
+            // New User Button
             Button(
                 onClick = { navController.navigate("signup") },
                 shape = RoundedCornerShape(16.dp),
@@ -109,9 +108,12 @@ fun LoginScreen(navController: NavController) {
             ) {
                 Text(text = "New user? Sign up", color = DarkerBrown, fontSize = 16.sp, fontWeight = FontWeight.Medium)
             }
+
             Spacer(modifier = Modifier.height(16.dp))
+
+            // Existing User Button
             Button(
-                onClick = { /* TODO: Handle Sign in */ },
+                onClick = { navController.navigate("signin") },
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = TerraCotta),
                 modifier = Modifier
@@ -120,13 +122,18 @@ fun LoginScreen(navController: NavController) {
             ) {
                 Text(text = "Already a user? Sign in", color = DarkerBrown, fontSize = 16.sp, fontWeight = FontWeight.Medium)
             }
+
             Spacer(modifier = Modifier.height(24.dp))
+
+            // Guest Button
             Text(
                 text = "Continue as Guest",
                 color = MidBrown,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable { Toast.makeText(context, "Guest mode is not yet available", Toast.LENGTH_SHORT).show() }
             )
+
             Spacer(modifier = Modifier.weight(1.5f))
         }
     }

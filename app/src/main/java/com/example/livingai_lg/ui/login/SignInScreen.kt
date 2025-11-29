@@ -3,12 +3,10 @@ package com.example.livingai_lg.ui.login
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.* 
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,7 +18,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,13 +30,11 @@ import com.example.livingai_lg.ui.theme.*
 import kotlinx.coroutines.launch
 
 @Composable
-fun SignUpScreen(navController: NavController) {
-    val name = remember { mutableStateOf("") }
+fun SignInScreen(navController: NavController) {
     val phoneNumber = remember { mutableStateOf("") }
     val isPhoneNumberValid = remember(phoneNumber.value) { phoneNumber.value.length == 10 && phoneNumber.value.all { it.isDigit() } }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    // Use 10.0.2.2 to connect to host machine's localhost from emulator
     val authManager = remember { AuthManager(context, AuthApiClient("http://10.0.2.2:3000"), TokenManager(context)) }
 
     Box(
@@ -63,35 +58,9 @@ fun SignUpScreen(navController: NavController) {
                 Text("Farm", fontSize = 32.sp, fontWeight = FontWeight.Medium, color = Color(0xFFE17100))
                 Text("Market", fontSize = 32.sp, fontWeight = FontWeight.Medium, color = Color.Black)
             }
-            Text("Find your perfect livestock", fontSize = 16.sp, color = Color(0xFF4A5565))
+            Text("Welcome back!", fontSize = 16.sp, color = Color(0xFF4A5565))
 
-            Spacer(modifier = Modifier.height(64.dp))
-
-            Text(
-                text = "Enter Name",
-                fontSize = 16.sp,
-                color = Color(0xFF364153),
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.align(Alignment.Start).padding(start = 21.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            TextField(
-                value = name.value,
-                onValueChange = { name.value = it },
-                placeholder = { Text("Enter your name", color = Color(0xFF99A1AF)) },
-                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = Color(0xFF99A1AF)) },
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.White.copy(alpha = 0.9f),
-                    unfocusedContainerColor = Color.White.copy(alpha = 0.9f),
-                    disabledContainerColor = Color.White.copy(alpha = 0.9f),
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                ),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth().height(52.dp)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(128.dp))
 
             Text(
                 text = "Enter Phone Number",
@@ -150,7 +119,8 @@ fun SignUpScreen(navController: NavController) {
                     scope.launch {
                         authManager.requestOtp(fullPhoneNumber)
                             .onSuccess {
-                                navController.navigate("otp/$fullPhoneNumber/${name.value}")
+                                // For existing user, name is not needed, so we pass a placeholder
+                                navController.navigate("otp/$fullPhoneNumber/existing_user")
                             }
                             .onFailure {
                                 Toast.makeText(context, "Failed to send OTP: ${it.message}", Toast.LENGTH_LONG).show()
@@ -167,21 +137,7 @@ fun SignUpScreen(navController: NavController) {
                 ),
                 modifier = Modifier.fillMaxWidth().height(56.dp).shadow(elevation = 4.dp, shape = RoundedCornerShape(16.dp))
             ) {
-                Text("Sign In", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                Text("Don't have an account? ", color = Color(0xFF4A5565), fontSize = 16.sp)
-                Text(
-                    text = "Sign up",
-                    color = Color(0xFFE17100),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    textDecoration = TextDecoration.Underline,
-                    modifier = Modifier.clickable { navController.navigate("login") }
-                )
+                Text("Sign In", fontSize = 16.sp, fontWeight = FontWeight.Medium)
             }
         }
     }
@@ -189,8 +145,8 @@ fun SignUpScreen(navController: NavController) {
 
 @Preview(showBackground = true)
 @Composable
-fun SignUpScreenPreview() {
+fun SignInScreenPreview() {
     LivingAi_LgTheme {
-        SignUpScreen(rememberNavController())
+        SignInScreen(rememberNavController())
     }
 }
