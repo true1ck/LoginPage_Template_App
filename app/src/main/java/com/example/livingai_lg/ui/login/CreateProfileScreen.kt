@@ -1,5 +1,6 @@
 package com.example.livingai_lg.ui.login
 
+import android.app.Application
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -32,9 +33,9 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun CreateProfileScreen(navController: NavController, name: String) {
-    val context = LocalContext.current
+    val context = LocalContext.current.applicationContext
     val scope = rememberCoroutineScope()
-    val authManager = remember { AuthManager(context, AuthApiClient("http://10.0.2.2:3000"), TokenManager(context)) }
+    val authManager = remember { AuthManager(context, AuthApiClient(context), TokenManager(context)) }
 
     fun updateProfile(userType: String) {
         scope.launch {

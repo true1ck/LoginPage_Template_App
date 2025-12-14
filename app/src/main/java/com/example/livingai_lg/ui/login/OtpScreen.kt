@@ -30,9 +30,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun OtpScreen(navController: NavController, phoneNumber: String, name: String) {
     val otp = remember { mutableStateOf("") }
-    val context = LocalContext.current
+    val context = LocalContext.current.applicationContext
     val scope = rememberCoroutineScope()
-    val authManager = remember { AuthManager(context, AuthApiClient("http://10.0.2.2:3000"), TokenManager(context)) }
+    val authManager = remember { AuthManager(context, AuthApiClient(context), TokenManager(context)) }
 
     // Flag to determine if this is a sign-in flow for an existing user.
     val isSignInFlow = name == "existing_user"
@@ -89,7 +89,7 @@ fun OtpScreen(navController: NavController, phoneNumber: String, name: String) {
                                     navController.navigate("success") { popUpTo("login") { inclusive = true } }
                                 } else {
                                     // For new users, check if a profile needs to be created.
-                                    if (response.needs_profile) {
+                                    if (response.needsProfile) {
                                         navController.navigate("create_profile/$name")
                                     } else {
                                         navController.navigate("success") { popUpTo("login") { inclusive = true } }

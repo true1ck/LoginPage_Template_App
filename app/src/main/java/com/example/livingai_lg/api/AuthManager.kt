@@ -16,13 +16,12 @@ class AuthManager(
         val deviceId = getDeviceId()
         return apiClient.verifyOtp(phoneNumber, code, deviceId)
             .onSuccess { response ->
-                tokenManager.saveTokens(response.access_token, response.refresh_token)
+                tokenManager.saveTokens(response.accessToken, response.refreshToken)
             }
     }
 
-    suspend fun updateProfile(name: String, userType: String): Result<UpdateProfileResponse> {
-        val accessToken = tokenManager.getAccessToken() ?: return Result.failure(Exception("No access token found"))
-        return apiClient.updateProfile(name, userType, accessToken)
+    suspend fun updateProfile(name: String, userType: String): Result<User> {
+        return apiClient.updateProfile(name, userType)
     }
 
     private fun getDeviceId(): String {

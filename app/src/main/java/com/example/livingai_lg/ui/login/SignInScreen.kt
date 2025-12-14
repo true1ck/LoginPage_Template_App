@@ -3,6 +3,7 @@ package com.example.livingai_lg.ui.login
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -18,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,9 +35,9 @@ import kotlinx.coroutines.launch
 fun SignInScreen(navController: NavController) {
     val phoneNumber = remember { mutableStateOf("") }
     val isPhoneNumberValid = remember(phoneNumber.value) { phoneNumber.value.length == 10 && phoneNumber.value.all { it.isDigit() } }
-    val context = LocalContext.current
+    val context = LocalContext.current.applicationContext
     val scope = rememberCoroutineScope()
-    val authManager = remember { AuthManager(context, AuthApiClient("http://10.0.2.2:3000"), TokenManager(context)) }
+    val authManager = remember { AuthManager(context, AuthApiClient(context), TokenManager(context)) }
 
     Box(
         modifier = Modifier
@@ -119,7 +121,6 @@ fun SignInScreen(navController: NavController) {
                     scope.launch {
                         authManager.requestOtp(fullPhoneNumber)
                             .onSuccess {
-                                // For existing user, name is not needed, so we pass a placeholder
                                 navController.navigate("otp/$fullPhoneNumber/existing_user")
                             }
                             .onFailure {
@@ -138,6 +139,20 @@ fun SignInScreen(navController: NavController) {
                 modifier = Modifier.fillMaxWidth().height(56.dp).shadow(elevation = 4.dp, shape = RoundedCornerShape(16.dp))
             ) {
                 Text("Sign In", fontSize = 16.sp, fontWeight = FontWeight.Medium)
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                Text("Don't have an account? ", color = Color(0xFF4A5565), fontSize = 16.sp)
+                Text(
+                    text = "Sign up",
+                    color = Color(0xFFE17100),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier.clickable { navController.navigate("signup") }
+                )
             }
         }
     }

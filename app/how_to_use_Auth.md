@@ -214,9 +214,75 @@ Authorization: Bearer <access_token>
   "name": "John Doe",
   "role": "user",
   "user_type": "seller",
+  "avatar_url": "https://example.com/avatar.jpg",
+  "language": "en",
+  "timezone": "Asia/Kolkata",
   "created_at": "2024-01-15T10:30:00Z",
   "last_login_at": "2024-01-20T14:22:00Z",
-  "active_devices_count": 2
+  "active_devices_count": 2,
+  "location": {
+    "id": "location-uuid-here",
+    "country": "India",
+    "state": "Maharashtra",
+    "district": "Pune",
+    "city_village": "Pune City",
+    "pincode": "411001",
+    "coordinates": {
+      "latitude": 18.5204,
+      "longitude": 73.8567
+    },
+    "location_type": "home",
+    "is_saved_address": true,
+    "source_type": "manual",
+    "source_confidence": "high",
+    "created_at": "2024-01-15T10:30:00Z",
+    "updated_at": "2024-01-20T14:22:00Z"
+  },
+  "locations": [
+    {
+      "id": "location-uuid-here",
+      "country": "India",
+      "state": "Maharashtra",
+      "district": "Pune",
+      "city_village": "Pune City",
+      "pincode": "411001",
+      "coordinates": {
+        "latitude": 18.5204,
+        "longitude": 73.8567
+      },
+      "location_type": "home",
+      "is_saved_address": true,
+      "source_type": "manual",
+      "source_confidence": "high",
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-20T14:22:00Z"
+    }
+  ]
+}
+```
+
+**Response Notes:**
+- `location`: Primary/most recent saved location (or `null` if no saved locations)
+- `locations`: Array of all saved locations (empty array if none)
+- `coordinates`: `null` if latitude/longitude not available
+- All optional fields (`avatar_url`, `language`, `timezone`) may be `null`
+
+**Response with No Saved Locations:**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number": "+919876543210",
+  "name": "John Doe",
+  "role": "user",
+  "user_type": "seller",
+  "avatar_url": null,
+  "language": null,
+  "timezone": null,
+  "created_at": "2024-01-15T10:30:00Z",
+  "last_login_at": "2024-01-20T14:22:00Z",
+  "active_devices_count": 1,
+  "location": null,
+  "locations": []
 }
 ```
 
@@ -230,6 +296,13 @@ or
 ```json
 {
   "error": "Invalid or expired token"
+}
+```
+
+**Error (404):**
+```json
+{
+  "error": "User not found"
 }
 ```
 
@@ -417,15 +490,43 @@ data class VerifyOtpRequest(
 )
 
 @Serializable
+data class Coordinates(
+    val latitude: Double,
+    val longitude: Double
+)
+
+@Serializable
+data class Location(
+    val id: String,
+    val country: String?,
+    val state: String?,
+    val district: String?,
+    @SerialName("city_village") val cityVillage: String?,
+    val pincode: String?,
+    val coordinates: Coordinates?,
+    @SerialName("location_type") val locationType: String?,
+    @SerialName("is_saved_address") val isSavedAddress: Boolean,
+    @SerialName("source_type") val sourceType: String?,
+    @SerialName("source_confidence") val sourceConfidence: String?,
+    @SerialName("created_at") val createdAt: String,
+    @SerialName("updated_at") val updatedAt: String
+)
+
+@Serializable
 data class User(
     val id: String,
     @SerialName("phone_number") val phoneNumber: String,
     val name: String?,
     val role: String,
     @SerialName("user_type") val userType: String?,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
+    val language: String? = null,
+    val timezone: String? = null,
     @SerialName("created_at") val createdAt: String? = null,
     @SerialName("last_login_at") val lastLoginAt: String? = null,
-    @SerialName("active_devices_count") val activeDevicesCount: Int? = null
+    @SerialName("active_devices_count") val activeDevicesCount: Int? = null,
+    val location: Location? = null,
+    val locations: List<Location> = emptyList()
 )
 
 @Serializable
@@ -1034,9 +1135,9 @@ suspend fun <T> callWithAuth(
 ): Result<T> {
     val token = tokenStorage.getAccessToken()
         ?: return Result.failure(Exception("Not authenticated"))
-    
+
     return block(token).recoverCatching { error ->
-        if (error.message?.contains("401") == true || 
+        if (error.message?.contains("401") == true ||
             error.message?.contains("Unauthorized") == true) {
             // Token expired, refresh and retry
             refreshTokens().getOrNull()?.let { (newAccessToken, _) ->
@@ -1068,22 +1169,22 @@ suspend fun <T> callWithAuth(
 ```kotlin
 class LoginActivity : AppCompatActivity() {
     private lateinit var authManager: AuthManager
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         val httpClient = HttpClient(Android) {
             install(ContentNegotiation) {
                 json()
             }
         }
-        
+
         val apiClient = AuthApiClient("http://your-api-url", httpClient)
         val tokenStorage = AndroidTokenStorage(this)
         val deviceInfoProvider = AndroidDeviceInfoProvider(this)
-        
+
         authManager = AuthManager(apiClient, tokenStorage, deviceInfoProvider)
-        
+
         // Observe authentication state
         lifecycleScope.launch {
             authManager.isAuthenticated.collect { isAuth ->
@@ -1093,25 +1194,25 @@ class LoginActivity : AppCompatActivity() {
             }
         }
     }
-    
+
     private fun requestOtp() {
         lifecycleScope.launch {
             val phoneNumber = phoneInput.text.toString()
             authManager.requestOtp(phoneNumber)
-                .onSuccess { 
-                    showToast("OTP sent!") 
+                .onSuccess {
+                    showToast("OTP sent!")
                 }
-                .onFailure { 
-                    showError(it.message ?: "Failed to send OTP") 
+                .onFailure {
+                    showError(it.message ?: "Failed to send OTP")
                 }
         }
     }
-    
+
     private fun verifyOtp() {
         lifecycleScope.launch {
             val phoneNumber = phoneInput.text.toString()
             val code = otpInput.text.toString()
-            
+
             authManager.verifyOtp(phoneNumber, code)
                 .onSuccess { response ->
                     if (response.needsProfile) {
@@ -1121,8 +1222,8 @@ class LoginActivity : AppCompatActivity() {
                     }
                     finish()
                 }
-                .onFailure { 
-                    showError("Invalid OTP") 
+                .onFailure {
+                    showError("Invalid OTP")
                 }
         }
     }

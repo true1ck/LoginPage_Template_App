@@ -37,10 +37,10 @@ fun SignUpScreen(navController: NavController) {
     val name = remember { mutableStateOf("") }
     val phoneNumber = remember { mutableStateOf("") }
     val isPhoneNumberValid = remember(phoneNumber.value) { phoneNumber.value.length == 10 && phoneNumber.value.all { it.isDigit() } }
-    val context = LocalContext.current
+    val context = LocalContext.current.applicationContext
     val scope = rememberCoroutineScope()
     // Use 10.0.2.2 to connect to host machine's localhost from emulator
-    val authManager = remember { AuthManager(context, AuthApiClient("http://10.0.2.2:3000"), TokenManager(context)) }
+    val authManager = remember { AuthManager(context, AuthApiClient(context), TokenManager(context)) }
 
     Box(
         modifier = Modifier
@@ -173,7 +173,7 @@ fun SignUpScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(32.dp))
 
             Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                Text("Don't have an account? ", color = Color(0xFF4A5565), fontSize = 16.sp)
+                Text("Don\'t have an account? ", color = Color(0xFF4A5565), fontSize = 16.sp)
                 Text(
                     text = "Sign up",
                     color = Color(0xFFE17100),

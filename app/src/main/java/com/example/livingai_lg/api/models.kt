@@ -1,9 +1,11 @@
 package com.example.livingai_lg.api
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+// region: OTP and Login
 @Serializable
-data class RequestOtpRequest(val phone_number: String)
+data class RequestOtpRequest(@SerialName("phone_number") val phoneNumber: String)
 
 @Serializable
 data class RequestOtpResponse(val ok: Boolean)
@@ -12,51 +14,77 @@ data class RequestOtpResponse(val ok: Boolean)
 data class DeviceInfo(
     val platform: String,
     val model: String? = null,
-    val os_version: String? = null,
-    val app_version: String? = null,
-    val language_code: String? = null,
+    @SerialName("os_version") val osVersion: String? = null,
+    @SerialName("app_version") val appVersion: String? = null,
+    @SerialName("language_code") val languageCode: String? = null,
     val timezone: String? = null
 )
 
 @Serializable
 data class VerifyOtpRequest(
-    val phone_number: String,
+    @SerialName("phone_number") val phoneNumber: String,
     val code: String,
-    val device_id: String,
-    val device_info: DeviceInfo? = null
-)
-
-@Serializable
-data class User(
-    val id: String,
-    val phone_number: String,
-    val name: String?,
-    val role: String,
-    val user_type: String?
+    @SerialName("device_id") val deviceId: String,
+    @SerialName("device_info") val deviceInfo: DeviceInfo? = null
 )
 
 @Serializable
 data class VerifyOtpResponse(
     val user: User,
-    val access_token: String,
-    val refresh_token: String,
-    val needs_profile: Boolean
+    @SerialName("access_token") val accessToken: String,
+    @SerialName("refresh_token") val refreshToken: String,
+    @SerialName("needs_profile") val needsProfile: Boolean
+)
+// endregion
+
+// region: Token Refresh
+@Serializable
+data class RefreshRequest(@SerialName("refresh_token") val refreshToken: String)
+
+@Serializable
+data class RefreshResponse(
+    @SerialName("access_token") val accessToken: String,
+    @SerialName("refresh_token") val refreshToken: String
+)
+// endregion
+
+// region: User Profile
+@Serializable
+data class UpdateProfileRequest(
+    val name: String,
+    @SerialName("user_type") val userType: String
 )
 
 @Serializable
-data class RefreshRequest(val refresh_token: String)
-
-@Serializable
-data class RefreshResponse(val access_token: String, val refresh_token: String)
-
-@Serializable
-data class UpdateProfileRequest(val name: String, val user_type: String)
-
-@Serializable
-data class UpdateProfileResponse(
+data class User(
     val id: String,
-    val phone_number: String,
+    @SerialName("phone_number") val phoneNumber: String,
     val name: String?,
     val role: String,
-    val user_type: String?
+    @SerialName("user_type") val userType: String?
 )
+
+@Serializable
+data class Location(
+    val city: String?,
+    val state: String?,
+    val pincode: String?
+)
+
+@Serializable
+data class UserDetails(
+    val id: String,
+    @SerialName("phone_number") val phoneNumber: String,
+    val name: String?,
+    @SerialName("user_type") val userType: String?,
+    @SerialName("last_login_at") val lastLoginAt: String?,
+    val location: Location?,
+    val locations: List<Location> = emptyList(),
+    @SerialName("active_devices_count") val activeDevicesCount: Int
+)
+// endregion
+
+// region: Logout
+@Serializable
+data class LogoutResponse(val ok: Boolean)
+// endregion

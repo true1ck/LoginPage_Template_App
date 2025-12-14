@@ -57,6 +57,7 @@ dependencies {
     implementation(libs.ktor.client.cio)
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.client.auth) // <-- Added missing dependency
 
     // Kotlinx Serialization
     implementation(libs.kotlinx.serialization.json)
