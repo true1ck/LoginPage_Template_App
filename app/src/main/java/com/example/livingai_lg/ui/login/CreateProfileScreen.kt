@@ -52,11 +52,7 @@ fun CreateProfileScreen(navController: NavController, name: String) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(LightCream, LighterCream, LightestGreen)
-                )
-            )
+
     ) {
         Column(
             modifier = Modifier
@@ -105,7 +101,7 @@ fun ProfileTypeItem(text: String, icon: Int, onClick: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun CreateProfileScreenPreview() {
-    LivingAi_LgTheme {
+    FarmMarketplaceTheme {
         CreateProfileScreen(rememberNavController(), "John Doe")
     }
 }

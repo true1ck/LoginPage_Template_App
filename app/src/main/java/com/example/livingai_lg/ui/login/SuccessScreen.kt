@@ -14,9 +14,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.livingai_lg.ui.MainViewModel
 import com.example.livingai_lg.ui.UserState
-import com.example.livingai_lg.ui.theme.LightCream
-import com.example.livingai_lg.ui.theme.LighterCream
-import com.example.livingai_lg.ui.theme.LightestGreen
 import com.example.livingai_lg.ui.MainViewModelFactory // <-- This was the missing import
 
 @Composable
@@ -28,11 +25,12 @@ fun SuccessScreen(mainViewModel: MainViewModel = viewModel(factory = MainViewMod
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(LightCream, LighterCream, LightestGreen)
-                )
-            ),
+//            .background(
+//                brush = Brush.linearGradient(
+//                    colors = listOf(LightCream, LighterCream, LightestGreen)
+//                )
+//            )
+        ,
         contentAlignment = Alignment.Center
     ) {
         when (val state = userState) {

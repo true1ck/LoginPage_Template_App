@@ -23,30 +23,32 @@ import com.example.livingai_lg.ui.AuthState
 import com.example.livingai_lg.ui.MainViewModel
 import com.example.livingai_lg.ui.MainViewModelFactory
 import com.example.livingai_lg.ui.login.*
-import com.example.livingai_lg.ui.theme.LivingAi_LgTheme
+import com.example.livingai_lg.ui.navigation.AppNavigation
+import com.example.livingai_lg.ui.theme.FarmMarketplaceTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            LivingAi_LgTheme {
+            FarmMarketplaceTheme {
                 val mainViewModel: MainViewModel = viewModel(factory = MainViewModelFactory(LocalContext.current))
                 val authState by mainViewModel.authState.collectAsState()
 
-                when (authState) {
-                    is AuthState.Unknown -> {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator()
-                        }
-                    }
-                    is AuthState.Authenticated -> {
-                        SuccessScreen(mainViewModel)
-                    }
-                    is AuthState.Unauthenticated -> {
-                        AuthNavigation()
-                    }
-                }
+                AppNavigation(authState)
+//                when (authState) {
+//                    is AuthState.Unknown -> {
+//                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+//                            CircularProgressIndicator()
+//                        }
+//                    }
+//                    is AuthState.Authenticated -> {
+//                        SuccessScreen(mainViewModel)
+//                    }
+//                    is AuthState.Unauthenticated -> {
+//                        AuthNavigation()
+//                    }
+//                }
             }
         }
     }

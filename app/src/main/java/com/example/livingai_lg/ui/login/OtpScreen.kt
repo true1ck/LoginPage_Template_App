@@ -40,11 +40,11 @@ fun OtpScreen(navController: NavController, phoneNumber: String, name: String) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(LightCream, LighterCream, LightestGreen)
-                )
-            )
+//            .background(
+//                brush = Brush.linearGradient(
+//                    colors = listOf(LightCream, LighterCream, LightestGreen)
+//                )
+//            )
     ) {
         Column(
             modifier = Modifier
@@ -60,7 +60,7 @@ fun OtpScreen(navController: NavController, phoneNumber: String, name: String) {
 
             TextField(
                 value = otp.value,
-                onValueChange = { if (it.length <= 6) otp.value = it },
+                    onValueChange = { if (it.length <= 6) otp.value = it },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(60.dp)
@@ -117,7 +117,7 @@ fun OtpScreen(navController: NavController, phoneNumber: String, name: String) {
 @Preview(showBackground = true)
 @Composable
 fun OtpScreenPreview() {
-    LivingAi_LgTheme {
+    FarmMarketplaceTheme() {
         OtpScreen(rememberNavController(), "+919876543210", "John Doe")
     }
 }

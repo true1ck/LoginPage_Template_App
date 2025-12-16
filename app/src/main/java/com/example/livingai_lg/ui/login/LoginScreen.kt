@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -29,11 +30,11 @@ fun LoginScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(LightCream, LighterCream, LightestGreen)
-                )
-            )
+//            .background(
+//                brush = Brush.linearGradient(
+//                    colors = listOf(LightCream, LighterCream, LightestGreen)
+//                )
+//            )
     ) {
         // Decorative elements...
 
@@ -55,7 +56,7 @@ fun LoginScreen(navController: NavController) {
                 Box(
                     modifier = Modifier
                         .size(56.dp)
-                        .background(Gold, RoundedCornerShape(28.dp)),
+                        .background(Color.Yellow, RoundedCornerShape(28.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(text = "🌾", fontSize = 24.sp)
@@ -64,7 +65,7 @@ fun LoginScreen(navController: NavController) {
                 Box(
                     modifier = Modifier
                         .size(72.dp)
-                        .background(LightOrange.copy(alpha = 0.72f), RoundedCornerShape(36.dp)),
+                        .background(Color.Yellow.copy(alpha = 0.72f), RoundedCornerShape(36.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(text = "🌱", fontSize = 32.sp)
@@ -73,7 +74,7 @@ fun LoginScreen(navController: NavController) {
                 Box(
                     modifier = Modifier
                         .size(56.dp)
-                        .background(DarkOrange.copy(alpha = 0.67f), RoundedCornerShape(28.dp)),
+                        .background(Color.Yellow.copy(alpha = 0.67f), RoundedCornerShape(28.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(text = "☀️", fontSize = 24.sp)
@@ -86,13 +87,13 @@ fun LoginScreen(navController: NavController) {
                 text = "Welcome!",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Medium,
-                color = DarkBrown
+                color = Color.Yellow
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Join the farm marketplace community",
                 fontSize = 16.sp,
-                color = MidBrown,
+                color = Color.Yellow,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(48.dp))
@@ -101,12 +102,12 @@ fun LoginScreen(navController: NavController) {
             Button(
                 onClick = { navController.navigate("signup") },
                 shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = LightOrange),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Yellow),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
             ) {
-                Text(text = "New user? Sign up", color = DarkerBrown, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                Text(text = "New user? Sign up", color = Color.Yellow, fontSize = 16.sp, fontWeight = FontWeight.Medium)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -115,12 +116,12 @@ fun LoginScreen(navController: NavController) {
             Button(
                 onClick = { navController.navigate("signin") },
                 shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = TerraCotta),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Yellow),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
             ) {
-                Text(text = "Already a user? Sign in", color = DarkerBrown, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                Text(text = "Already a user? Sign in", color = Color.Yellow, fontSize = 16.sp, fontWeight = FontWeight.Medium)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -128,7 +129,7 @@ fun LoginScreen(navController: NavController) {
             // Guest Button
             Text(
                 text = "Continue as Guest",
-                color = MidBrown,
+                color = Color.Yellow,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.clickable { Toast.makeText(context, "Guest mode is not yet available", Toast.LENGTH_SHORT).show() }
@@ -142,7 +143,7 @@ fun LoginScreen(navController: NavController) {
 @Preview(showBackground = true)
 @Composable
 fun LoginScreenPreview() {
-    LivingAi_LgTheme {
+    FarmMarketplaceTheme() {
         LoginScreen(rememberNavController())
     }
 }

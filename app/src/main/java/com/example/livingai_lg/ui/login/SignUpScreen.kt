@@ -45,11 +45,11 @@ fun SignUpScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(LightCream, LighterCream, LightestGreen)
-                )
-            )
+//            .background(
+//                brush = Brush.linearGradient(
+//                    colors = listOf(LightCream, LighterCream, LightestGreen)
+//                )
+//            )
     ) {
         Column(
             modifier = Modifier
@@ -190,7 +190,7 @@ fun SignUpScreen(navController: NavController) {
 @Preview(showBackground = true)
 @Composable
 fun SignUpScreenPreview() {
-    LivingAi_LgTheme {
+    FarmMarketplaceTheme {
         SignUpScreen(rememberNavController())
     }
 }
