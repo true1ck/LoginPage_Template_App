@@ -47,7 +47,7 @@ fun NavGraphBuilder.mainNavGraph(navController: NavController) {
 
     navigation(
         route = Graph.MAIN,
-        startDestination = AppScreen.BUY_ANIMALS
+        startDestination = AppScreen.chooseService("1") // Default to ChooseServiceScreen for authenticated users
     ){
 
 

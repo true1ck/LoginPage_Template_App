@@ -29,6 +29,7 @@ import com.example.livingai_lg.api.AuthApiClient
 import com.example.livingai_lg.api.AuthManager
 import com.example.livingai_lg.api.SignupRequest
 import com.example.livingai_lg.api.TokenManager
+import com.example.livingai_lg.api.UserNotFoundException
 import com.example.livingai_lg.ui.components.backgrounds.DecorativeBackground
 import kotlin.math.min
 import androidx.compose.ui.focus.FocusRequester
@@ -42,6 +43,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import kotlinx.coroutines.delay
 
 
 @Composable
@@ -61,6 +63,22 @@ fun OtpScreen(
     val context = LocalContext.current.applicationContext
     val scope = rememberCoroutineScope()
     val authManager = remember { AuthManager(context, AuthApiClient(context), TokenManager(context)) }
+    
+    // Countdown timer state (2 minutes = 120 seconds)
+    var countdownSeconds by remember { mutableStateOf(120) }
+    
+    // Start countdown when screen is composed
+    LaunchedEffect(Unit) {
+        while (countdownSeconds > 0) {
+            delay(1000) // Wait 1 second
+            countdownSeconds--
+        }
+    }
+    
+    // Format countdown as MM:SS
+    val minutes = countdownSeconds / 60
+    val seconds = countdownSeconds % 60
+    val countdownText = String.format("%02d:%02d", minutes, seconds)
 
     // Flag to determine if this is a sign-in flow for an existing user.
     val isSignInFlow = name == "existing_user"
@@ -131,6 +149,28 @@ Column(
             onOtpChange = { if (it.length <= 6) otp.value = it }
         )
     }
+    
+    // ---------------------------
+    // Countdown Timer
+    // ---------------------------
+    Text(
+        text = countdownText,
+        color = Color(0xFF927B5E),
+        fontSize = fs(16f),
+        fontWeight = FontWeight.Medium,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
+        textAlign = TextAlign.Center,
+        style = LocalTextStyle.current.copy(
+            shadow = Shadow(
+                color = Color.Black.copy(alpha = 0.15f),
+                offset = Offset(0f, s(2f).value),
+                blurRadius = s(2f).value
+            )
+        )
+    )
+    
     // ---------------------------
     // Continue Button
     // ---------------------------
@@ -198,13 +238,15 @@ Column(
                                                     // Check if profile needs completion
                                                     val needsProfile = signupResponse.needsProfile == true || verifyResponse.needsProfile
                                                     android.util.Log.d("OTPScreen", "Signup successful. needsProfile=$needsProfile, navigating...")
+                                                    // Refresh auth status - this will trigger navigation via AppNavigation's LaunchedEffect
+                                                    mainViewModel.refreshAuthStatus()
                                                     try {
                                                         if (needsProfile) {
                                                             android.util.Log.d("OTPScreen", "Navigating to create profile screen with name: $name")
                                                             onCreateProfile(name)
                                                         } else {
-                                                            android.util.Log.d("OTPScreen", "Navigating to success screen")
-                                                            onSuccess()
+                                                            // Don't manually navigate - let AppNavigation handle it
+                                                            android.util.Log.d("OTPScreen", "Signup successful - auth state updated, navigation will happen automatically")
                                                         }
                                                     } catch (e: Exception) {
                                                         android.util.Log.e("OTPScreen", "Navigation error: ${e.message}", e)
@@ -215,13 +257,15 @@ Column(
                                                     // Navigate to success anyway since verify-otp succeeded
                                                     android.util.Log.d("OTPScreen", "Signup API returned false, but OTP verified. Navigating anyway...")
                                                     val needsProfile = verifyResponse.needsProfile
+                                                    // Refresh auth status - this will trigger navigation via AppNavigation's LaunchedEffect
+                                                    mainViewModel.refreshAuthStatus()
                                                     try {
                                                         if (needsProfile) {
                                                             android.util.Log.d("OTPScreen", "Navigating to create profile screen with name: $name")
                                                             onCreateProfile(name)
                                                         } else {
-                                                            android.util.Log.d("OTPScreen", "Navigating to success screen")
-                                                            onSuccess()
+                                                            // Don't manually navigate - let AppNavigation handle it
+                                                            android.util.Log.d("OTPScreen", "Signup successful - auth state updated, navigation will happen automatically")
                                                         }
                                                     } catch (e: Exception) {
                                                         android.util.Log.e("OTPScreen", "Navigation error: ${e.message}", e)
@@ -242,6 +286,8 @@ Column(
                                             // For existing users, use existing logic
                                             val needsProfile = verifyResponse.needsProfile
                                             android.util.Log.d("OTPScreen", "Navigating despite signup failure. needsProfile=$needsProfile")
+                                            // Refresh auth status - this will trigger navigation via AppNavigation's LaunchedEffect
+                                            mainViewModel.refreshAuthStatus()
                                             try {
                                                 // If this is a signup flow and signup failed, treat as new user
                                                 if (isSignupFlow) {
@@ -251,8 +297,8 @@ Column(
                                                     android.util.Log.d("OTPScreen", "Navigating to create profile screen with name: $name")
                                                     onCreateProfile(name)
                                                 } else {
-                                                    android.util.Log.d("OTPScreen", "Navigating to success screen")
-                                                    onSuccess()
+                                                    // Don't manually navigate - let AppNavigation handle it
+                                                    android.util.Log.d("OTPScreen", "Signup successful - auth state updated, navigation will happen automatically")
                                                 }
                                             } catch (e: Exception) {
                                                 android.util.Log.e("OTPScreen", "Navigation error: ${e.message}", e)
@@ -276,35 +322,37 @@ Column(
                             authManager.login(phoneNumber, otp.value)
                                 .onSuccess { response ->
                                     android.util.Log.d("OTPScreen", "Sign-in OTP verified. needsProfile=${response.needsProfile}")
-                                    // Refresh auth status in MainViewModel so AppNavigation knows user is authenticated
+                                    // Tokens are now saved (synchronously via commit())
+                                    // Refresh auth status - this will optimistically set authState to Authenticated
+                                    // The LaunchedEffect in AppNavigation will automatically navigate to ChooseServiceScreen
                                     mainViewModel.refreshAuthStatus()
-                                    try {
-                                        if (isSignInFlow) {
-                                            // For existing users, always go to the success screen.
-                                            android.util.Log.d("OTPScreen", "Existing user - navigating to success")
-                                            onSuccess()
-                                        } else {
-                                            // For new users, check if a profile needs to be created.
-                                            if (response.needsProfile) {
-                                                android.util.Log.d("OTPScreen", "New user needs profile - navigating to create profile with name: $name")
-                                                onCreateProfile(name)
-                                            } else {
-                                                android.util.Log.d("OTPScreen", "New user - navigating to success")
-                                                onSuccess()
-                                            }
-                                        }
-                                    } catch (e: Exception) {
-                                        android.util.Log.e("OTPScreen", "Navigation error: ${e.message}", e)
-                                        Toast.makeText(context, "Navigation error: ${e.message}", Toast.LENGTH_LONG).show()
-                                    }
+                                    android.util.Log.d("OTPScreen", "Auth status refreshed - navigation will happen automatically via LaunchedEffect")
                                 }
                                 .onFailure { error ->
                                     android.util.Log.e("OTPScreen", "OTP verification failed: ${error.message}", error)
-                                    Toast.makeText(
-                                        context,
-                                        "Invalid or expired OTP",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
+                                    
+                                    // Check if user not found - redirect to signup
+                                    if (error is UserNotFoundException && error.errorCode == "USER_NOT_FOUND") {
+                                        android.util.Log.d("OTPScreen", "User not found - redirecting to signup")
+                                        Toast.makeText(
+                                            context,
+                                            error.message ?: "Account not found. Please sign up to create a new account.",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                        // Navigate back to landing page so user can choose signup
+                                        try {
+                                            onLanding()
+                                        } catch (e: Exception) {
+                                            android.util.Log.e("OTPScreen", "Navigation error: ${e.message}", e)
+                                        }
+                                    } else {
+                                        // Other errors (invalid OTP, expired, etc.)
+                                        Toast.makeText(
+                                            context,
+                                            error.message ?: "Invalid or expired OTP",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
                                 }
                         }
                     }

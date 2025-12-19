@@ -118,3 +118,25 @@ data class UserDetails(
 @Serializable
 data class LogoutResponse(val ok: Boolean)
 // endregion
+
+// region: Error Responses
+@Serializable
+data class ErrorResponse(
+    val success: Boolean? = null,
+    val error: String? = null,
+    val message: String? = null,
+    @SerialName("user_exists") val userExists: Boolean? = null
+)
+// endregion
+
+// region: User Check
+@Serializable
+data class CheckUserRequest(@SerialName("phone_number") val phoneNumber: String)
+
+@Serializable
+data class CheckUserResponse(
+    val success: Boolean,
+    val message: String? = null,
+    @SerialName("user_exists") val userExists: Boolean
+)
+// endregion

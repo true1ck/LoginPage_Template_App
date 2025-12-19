@@ -14,6 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+// Note: CoroutineScope, Dispatchers, delay, launch still used in onCreateProfile callbacks
 import com.example.livingai_lg.ui.screens.SaleArchiveScreen
 import com.example.livingai_lg.ui.screens.auth.LandingScreen
 import com.example.livingai_lg.ui.screens.auth.OtpScreen
@@ -107,25 +108,13 @@ fun NavGraphBuilder.authNavGraph(navController: NavController, mainViewModel: co
                     }
                 },
                 onSuccess = { 
-                    android.util.Log.d("AuthNavGraph", "Navigating to choose service")
-                    // Navigate to main graph first without popping, then navigate to specific route
+                    android.util.Log.d("AuthNavGraph", "Sign-in successful - navigating to ChooseServiceScreen")
+                    // Navigate to MAIN graph which starts at ChooseServiceScreen (startDestination)
                     try {
-                        // Navigate to main graph (this will use its start destination)
                         navController.navigate(Graph.MAIN) {
-                            // Don't pop the AUTH graph yet - keep the graph structure
+                            // Clear back stack to prevent going back to auth screens
+                            popUpTo(Graph.AUTH) { inclusive = true }
                             launchSingleTop = true
-                        }
-                        // Then navigate to the specific route after a short delay
-                        CoroutineScope(Dispatchers.Main).launch {
-                            delay(200)
-                            try {
-                                navController.navigate(AppScreen.chooseService("1")) {
-                                    // Now pop the AUTH graph after we're in the MAIN graph
-                                    popUpTo(Graph.AUTH) { inclusive = true }
-                                }
-                            } catch (e: Exception) {
-                                android.util.Log.e("AuthNavGraph", "Secondary navigation error: ${e.message}", e)
-                            }
                         }
                     } catch (e: Exception) {
                         android.util.Log.e("AuthNavGraph", "Navigation error: ${e.message}", e)
@@ -190,25 +179,13 @@ fun NavGraphBuilder.authNavGraph(navController: NavController, mainViewModel: co
                     }
                 },
                 onSuccess = { 
-                    android.util.Log.d("AuthNavGraph", "Navigating to choose service")
-                    // Navigate to main graph first without popping, then navigate to specific route
+                    android.util.Log.d("AuthNavGraph", "Sign-in successful - navigating to ChooseServiceScreen")
+                    // Navigate to MAIN graph which starts at ChooseServiceScreen (startDestination)
                     try {
-                        // Navigate to main graph (this will use its start destination)
                         navController.navigate(Graph.MAIN) {
-                            // Don't pop the AUTH graph yet - keep the graph structure
+                            // Clear back stack to prevent going back to auth screens
+                            popUpTo(Graph.AUTH) { inclusive = true }
                             launchSingleTop = true
-                        }
-                        // Then navigate to the specific route after a short delay
-                        CoroutineScope(Dispatchers.Main).launch {
-                            delay(200)
-                            try {
-                                navController.navigate(AppScreen.chooseService("1")) {
-                                    // Now pop the AUTH graph after we're in the MAIN graph
-                                    popUpTo(Graph.AUTH) { inclusive = true }
-                                }
-                            } catch (e: Exception) {
-                                android.util.Log.e("AuthNavGraph", "Secondary navigation error: ${e.message}", e)
-                            }
                         }
                     } catch (e: Exception) {
                         android.util.Log.e("AuthNavGraph", "Navigation error: ${e.message}", e)

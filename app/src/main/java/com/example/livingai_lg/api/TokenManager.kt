@@ -28,7 +28,7 @@ class TokenManager(context: Context) {
         prefs.edit()
             .putString(KEY_ACCESS_TOKEN, accessToken)
             .putString(KEY_REFRESH_TOKEN, refreshToken)
-            .apply()
+            .commit() // Use commit() instead of apply() to ensure tokens are saved synchronously
     }
 
     fun getAccessToken(): String? = prefs.getString(KEY_ACCESS_TOKEN, null)

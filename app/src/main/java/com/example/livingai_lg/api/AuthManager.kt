@@ -8,6 +8,10 @@ class AuthManager(
     private val apiClient: AuthApiClient,
     private val tokenManager: TokenManager
 ) {
+    suspend fun checkUser(phoneNumber: String): Result<CheckUserResponse> {
+        return apiClient.checkUser(phoneNumber)
+    }
+
     suspend fun requestOtp(phoneNumber: String): Result<RequestOtpResponse> {
         return apiClient.requestOtp(phoneNumber)
     }

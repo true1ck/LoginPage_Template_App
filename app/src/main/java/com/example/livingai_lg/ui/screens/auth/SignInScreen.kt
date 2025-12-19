@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.example.livingai_lg.api.AuthApiClient
 import com.example.livingai_lg.api.AuthManager
 import com.example.livingai_lg.api.TokenManager
+import com.example.livingai_lg.api.UserNotFoundException
 import com.example.livingai_lg.ui.components.backgrounds.DecorativeBackground
 import com.example.livingai_lg.ui.components.PhoneNumberInput
 
@@ -96,12 +97,34 @@ fun SignInScreen(
                     onClick = {
                         val fullPhoneNumber = "+91${phoneNumber.value}"
                         scope.launch {
-                            authManager.requestOtp(fullPhoneNumber)
-                                .onSuccess {
-                                    onSignInClick(fullPhoneNumber,"existing_user")
+                            // First check if user exists before requesting OTP
+                            authManager.checkUser(fullPhoneNumber)
+                                .onSuccess { checkResponse ->
+                                    if (checkResponse.userExists) {
+                                        // User exists, proceed to request OTP
+                                        authManager.requestOtp(fullPhoneNumber)
+                                            .onSuccess {
+                                                onSignInClick(fullPhoneNumber, "existing_user")
+                                            }
+                                            .onFailure {
+                                                Toast.makeText(context, "Failed to send OTP: ${it.message}", Toast.LENGTH_LONG).show()
+                                            }
+                                    } else {
+                                        // User doesn't exist (shouldn't happen if API works correctly)
+                                        Toast.makeText(context, "User is not registered. Please sign up.", Toast.LENGTH_LONG).show()
+                                    }
                                 }
-                                .onFailure {
-                                    Toast.makeText(context, "Failed to send OTP: ${it.message}", Toast.LENGTH_LONG).show()
+                                .onFailure { error ->
+                                    // User not found or other error
+                                    if (error is UserNotFoundException) {
+                                        Toast.makeText(
+                                            context,
+                                            error.message ?: "User is not registered. Please sign up to create a new account.",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    } else {
+                                        Toast.makeText(context, "Error: ${error.message}", Toast.LENGTH_LONG).show()
+                                    }
                                 }
                         }
                               },

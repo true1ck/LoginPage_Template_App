@@ -169,15 +169,50 @@ fun SignUpScreen(
                     onClick = {
                         scope.launch {
                             val fullPhoneNumber = "+91${formData.phoneNumber}"
-                            // Request OTP first before allowing signup
-                            authManager.requestOtp(fullPhoneNumber)
-                                .onSuccess {
-                                    // OTP sent successfully, navigate to OTP screen with signup data
-                                    // Pass signup form data through the callback
-                                    onSignUpClick(fullPhoneNumber, formData.name, formData.state, formData.district, formData.village)
+                            
+                            // First check if user already exists
+                            authManager.checkUser(fullPhoneNumber)
+                                .onSuccess { checkResponse ->
+                                    if (checkResponse.userExists) {
+                                        // User already registered - show message to sign in instead
+                                        Toast.makeText(
+                                            context,
+                                            "This phone number is already registered. Please sign in instead.",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                        // Optionally navigate to sign in screen
+                                        onSignInClick()
+                                    } else {
+                                        // User doesn't exist - proceed with signup
+                                        // Request OTP first before allowing signup
+                                        authManager.requestOtp(fullPhoneNumber)
+                                            .onSuccess {
+                                                // OTP sent successfully, navigate to OTP screen with signup data
+                                                // Pass signup form data through the callback
+                                                onSignUpClick(fullPhoneNumber, formData.name, formData.state, formData.district, formData.village)
+                                            }
+                                            .onFailure {
+                                                Toast.makeText(context, "Signup failed: ${it.message}", Toast.LENGTH_LONG).show()
+                                            }
+                                    }
                                 }
-                                .onFailure {
-                                    Toast.makeText(context, "Signup failed: ${it.message}", Toast.LENGTH_LONG).show()
+                                .onFailure { checkError ->
+                                    // If check fails, it might be a network error or user doesn't exist
+                                    // Try to proceed with signup (user might not exist)
+                                    if (checkError is com.example.livingai_lg.api.UserNotFoundException) {
+                                        // User doesn't exist - proceed with signup
+                                        authManager.requestOtp(fullPhoneNumber)
+                                            .onSuccess {
+                                                // OTP sent successfully, navigate to OTP screen with signup data
+                                                onSignUpClick(fullPhoneNumber, formData.name, formData.state, formData.district, formData.village)
+                                            }
+                                            .onFailure {
+                                                Toast.makeText(context, "Signup failed: ${it.message}", Toast.LENGTH_LONG).show()
+                                            }
+                                    } else {
+                                        // Other error (network, etc.)
+                                        Toast.makeText(context, "Unable to verify phone number: ${checkError.message}", Toast.LENGTH_LONG).show()
+                                    }
                                 }
                         }
                     },

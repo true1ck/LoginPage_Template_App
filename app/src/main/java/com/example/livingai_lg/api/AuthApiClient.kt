@@ -19,6 +19,12 @@ import kotlinx.serialization.json.Json
 import java.util.Locale
 import java.util.TimeZone
 
+// Custom exception for user not found
+class UserNotFoundException(
+    message: String,
+    val errorCode: String
+) : Exception(message)
+
 class AuthApiClient(private val context: Context) {
 
     private val tokenManager = TokenManager(context)
@@ -32,6 +38,7 @@ class AuthApiClient(private val context: Context) {
                 ignoreUnknownKeys = true
             })
         }
+
 
         install(Auth) {
             bearer {
@@ -68,6 +75,36 @@ class AuthApiClient(private val context: Context) {
 
     // --- API Calls ---
 
+    suspend fun checkUser(phoneNumber: String): Result<CheckUserResponse> = runCatching {
+        val response = client.post("auth/check-user") {
+            contentType(ContentType.Application.Json)
+            setBody(CheckUserRequest(phoneNumber))
+        }
+        
+        if (response.status.isSuccess()) {
+            // Success - parse as CheckUserResponse
+            response.body<CheckUserResponse>()
+        } else {
+            // Error - parse as ErrorResponse
+            val errorResponse = try {
+                response.body<ErrorResponse>()
+            } catch (e: Exception) {
+                // If parsing fails, create default error
+                ErrorResponse(
+                    success = false,
+                    error = "USER_NOT_FOUND",
+                    message = "User is not registered. Please sign up to create a new account.",
+                    userExists = false
+                )
+            }
+            
+            throw UserNotFoundException(
+                message = errorResponse.message ?: "User is not registered. Please sign up to create a new account.",
+                errorCode = errorResponse.error ?: "USER_NOT_FOUND"
+            )
+        }
+    }
+
     suspend fun requestOtp(phoneNumber: String): Result<RequestOtpResponse> = runCatching {
         client.post("auth/request-otp") {
             contentType(ContentType.Application.Json)
@@ -76,13 +113,23 @@ class AuthApiClient(private val context: Context) {
     }
 
     suspend fun verifyOtp(phoneNumber: String, code: String, deviceId: String): Result<VerifyOtpResponse> = runCatching {
-        val response: VerifyOtpResponse = client.post("auth/verify-otp") {
+        val response = client.post("auth/verify-otp") {
             contentType(ContentType.Application.Json)
             setBody(VerifyOtpRequest(phoneNumber, code.toInt(), deviceId, getDeviceInfo()))
-        }.body()
-
-        tokenManager.saveTokens(response.accessToken, response.refreshToken)
-        response
+        }
+        
+        if (response.status.isSuccess()) {
+            val verifyResponse: VerifyOtpResponse = response.body()
+            tokenManager.saveTokens(verifyResponse.accessToken, verifyResponse.refreshToken)
+            verifyResponse
+        } else {
+            // Parse error response
+            val errorResponse: ErrorResponse = response.body()
+            throw UserNotFoundException(
+                message = errorResponse.message ?: "User not found",
+                errorCode = errorResponse.error ?: "USER_NOT_FOUND"
+            )
+        }
     }
 
     suspend fun signup(request: SignupRequest): Result<SignupResponse> = runCatching {

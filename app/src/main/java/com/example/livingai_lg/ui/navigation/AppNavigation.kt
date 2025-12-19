@@ -17,6 +17,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import kotlinx.coroutines.delay
 import com.example.livingai_lg.ui.AuthState
 import com.example.livingai_lg.ui.screens.AnimalProfileScreen
 import com.example.livingai_lg.ui.screens.BuyScreen
@@ -117,44 +118,81 @@ fun AppNavigation(
 ) {
     val navController = rememberNavController()
     
-    // Always start with AUTH (landing screen) - this ensures LandingScreen opens first
-    // We'll navigate to MAIN only if user is authenticated (handled by LaunchedEffect)
+    // Determine start destination based on initial auth state
+    // This prevents showing landing screen when user is already logged in
+    val startDestination = remember(authState) {
+        when (authState) {
+            is AuthState.Authenticated -> Graph.MAIN
+            is AuthState.Unauthenticated -> Graph.AUTH
+            is AuthState.Unknown -> Graph.AUTH // Show landing while checking
+        }
+    }
+    
     NavHost(
         navController = navController,
-        startDestination = Graph.AUTH
+        startDestination = startDestination
     ) {
         authNavGraph(navController, mainViewModel)
         mainNavGraph(navController)
     }
 
-    // Handle navigation based on auth state
+    // Handle navigation based on auth state changes
     LaunchedEffect(authState) {
+        android.util.Log.d("AppNavigation", "LaunchedEffect triggered with authState: $authState")
         when (authState) {
             is AuthState.Authenticated -> {
-                // User is authenticated, navigate to main graph
+                // User is authenticated, navigate to ChooseServiceScreen
+                // Add a small delay to ensure NavHost graphs are fully built
+                delay(100)
+                
                 val currentRoute = navController.currentBackStackEntry?.destination?.route
-                // Only navigate if we're not already in the MAIN graph
+                android.util.Log.d("AppNavigation", "Authenticated - currentRoute: $currentRoute")
+                // Only navigate if we're not already in the MAIN graph or ChooseServiceScreen
                 if (currentRoute?.startsWith(Graph.MAIN) != true && 
-                    currentRoute?.startsWith(Graph.AUTH) == true) {
-                    navController.navigate(Graph.MAIN) {
-                        // Clear back stack to prevent going back to auth screens
-                        popUpTo(Graph.AUTH) { inclusive = true }
+                    currentRoute?.startsWith(AppScreen.CHOOSE_SERVICE) != true) {
+                    android.util.Log.d("AppNavigation", "Navigating to ChooseServiceScreen (default profileId: 1)")
+                    try {
+                        // Navigate directly to the start destination route of MAIN graph
+                        // This avoids the "Sequence is empty" error when navigating to Graph.MAIN
+                        navController.navigate(AppScreen.chooseService("1")) {
+                            // Clear back stack to prevent going back to auth screens
+                            popUpTo(Graph.AUTH) { inclusive = true }
+                            // Prevent multiple navigations
+                            launchSingleTop = true
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("AppNavigation", "Navigation error: ${e.message}", e)
+                        // Fallback: try navigating to Graph.MAIN if direct route fails
+                        try {
+                            navController.navigate(Graph.MAIN) {
+                                popUpTo(Graph.AUTH) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        } catch (e2: Exception) {
+                            android.util.Log.e("AppNavigation", "Fallback navigation also failed: ${e2.message}", e2)
+                        }
                     }
+                } else {
+                    android.util.Log.d("AppNavigation", "Already in MAIN graph or ChooseServiceScreen, skipping navigation")
                 }
             }
             is AuthState.Unauthenticated -> {
                 // User is not authenticated, ensure we're in auth graph (landing screen)
                 val currentRoute = navController.currentBackStackEntry?.destination?.route
-                if (currentRoute?.startsWith(Graph.MAIN) == true) {
+                if (currentRoute?.startsWith(Graph.MAIN) == true || 
+                    currentRoute?.startsWith(Graph.AUTH) != true) {
                     navController.navigate(Graph.AUTH) {
                         // Clear back stack to prevent going back to main screens
                         popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             }
             is AuthState.Unknown -> {
-                // Still checking auth status, stay on landing screen
-                // Don't navigate anywhere yet
+                // Still checking auth status
+                // If we're on landing screen, stay there
+                // If we're on main screen and checking, don't navigate yet
+                // This prevents flickering during token validation
             }
         }
     }
