@@ -88,8 +88,8 @@ data class User(
     val id: String,
     @SerialName("phone_number") val phoneNumber: String,
     val name: String?,
-    val role: String,
-    @SerialName("user_type") val userType: String?,
+    val role: String? = null,  // Optional field - can be missing from JSON, defaults to null
+    @SerialName("user_type") val userType: String? = null,  // Optional field - can be missing from JSON, defaults to null
     @SerialName("created_at") val createdAt: String? = null,
     @SerialName("country_code") val countryCode: String? = null
 )

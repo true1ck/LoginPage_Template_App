@@ -70,6 +70,8 @@ object AppScreen {
 
     const val CHATS = "chats"
 
+    const val ACCOUNTS = "accounts"
+
     fun chats(contact: String) =
         "$CHAT/$contact"
 
@@ -100,7 +102,7 @@ object AppScreen {
 
 object Graph {
     const val AUTH = "auth"
-    const val MAIN = "auth"
+    const val MAIN = "main"
 
     fun auth(route: String)=
         "$AUTH/$route"
@@ -110,7 +112,8 @@ object Graph {
 }
 @Composable
 fun AppNavigation(
-    authState: AuthState
+    authState: AuthState,
+    mainViewModel: com.example.livingai_lg.ui.MainViewModel
 ) {
     val navController = rememberNavController()
     
@@ -120,20 +123,38 @@ fun AppNavigation(
         navController = navController,
         startDestination = Graph.AUTH
     ) {
-        authNavGraph(navController)
+        authNavGraph(navController, mainViewModel)
         mainNavGraph(navController)
     }
 
-    // Navigate to MAIN graph if user is authenticated
+    // Handle navigation based on auth state
     LaunchedEffect(authState) {
-        if (authState is AuthState.Authenticated) {
-            val currentRoute = navController.currentBackStackEntry?.destination?.route
-            // Only navigate if we're not already in the MAIN graph
-            if (currentRoute?.startsWith(Graph.MAIN) != true) {
-                navController.navigate(Graph.MAIN) {
-                    // Clear back stack to prevent going back to auth screens
-                    popUpTo(Graph.AUTH) { inclusive = true }
+        when (authState) {
+            is AuthState.Authenticated -> {
+                // User is authenticated, navigate to main graph
+                val currentRoute = navController.currentBackStackEntry?.destination?.route
+                // Only navigate if we're not already in the MAIN graph
+                if (currentRoute?.startsWith(Graph.MAIN) != true && 
+                    currentRoute?.startsWith(Graph.AUTH) == true) {
+                    navController.navigate(Graph.MAIN) {
+                        // Clear back stack to prevent going back to auth screens
+                        popUpTo(Graph.AUTH) { inclusive = true }
+                    }
                 }
+            }
+            is AuthState.Unauthenticated -> {
+                // User is not authenticated, ensure we're in auth graph (landing screen)
+                val currentRoute = navController.currentBackStackEntry?.destination?.route
+                if (currentRoute?.startsWith(Graph.MAIN) == true) {
+                    navController.navigate(Graph.AUTH) {
+                        // Clear back stack to prevent going back to main screens
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            }
+            is AuthState.Unknown -> {
+                // Still checking auth status, stay on landing screen
+                // Don't navigate anywhere yet
             }
         }
     }

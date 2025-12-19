@@ -94,6 +94,9 @@ fun BuyScreen(
                             user = userProfile,
                             onOpenAddressOverlay = { showAddressSelector = true },
                             selectedAddressId = selectedAddressId?:"1",
+                            onProfileClick = {
+                                onNavClick(AppScreen.ACCOUNTS)
+                            }
                         )
 
                         // Right-side actions (notifications, etc.)

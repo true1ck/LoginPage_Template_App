@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
                 val mainViewModel: MainViewModel = viewModel(factory = MainViewModelFactory(LocalContext.current))
                 val authState by mainViewModel.authState.collectAsState()
 
-                AppNavigation(authState)
+                AppNavigation(authState = authState, mainViewModel = mainViewModel)
 //                when (authState) {
 //                    is AuthState.Unknown -> {
 //                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

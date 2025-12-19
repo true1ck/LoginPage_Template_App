@@ -111,6 +111,20 @@ class AuthApiClient(private val context: Context) {
         client.get("users/me").body()
     }
 
+    suspend fun refreshToken(): Result<RefreshResponse> = runCatching {
+        val refreshToken = tokenManager.getRefreshToken() 
+            ?: throw IllegalStateException("No refresh token found")
+        
+        val response: RefreshResponse = client.post("auth/refresh") {
+            contentType(ContentType.Application.Json)
+            setBody(RefreshRequest(refreshToken))
+        }.body()
+
+        // Save the new tokens (refresh token rotates)
+        tokenManager.saveTokens(response.accessToken, response.refreshToken)
+        response
+    }
+
     suspend fun logout(): Result<LogoutResponse> = runCatching {
         val refreshToken = tokenManager.getRefreshToken() ?: throw IllegalStateException("No refresh token found")
         val response: LogoutResponse = client.post("auth/logout") {

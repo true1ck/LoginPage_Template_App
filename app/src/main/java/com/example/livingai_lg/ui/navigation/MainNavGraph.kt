@@ -8,9 +8,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
+import com.example.livingai_lg.ui.navigation.AppScreen
+import com.example.livingai_lg.ui.navigation.Graph
 import com.example.farmmarketplace.ui.screens.CallsScreen
 import com.example.farmmarketplace.ui.screens.ContactsScreen
 import com.example.livingai_lg.ui.models.profileTypes
+import com.example.livingai_lg.ui.screens.AccountsScreen
 import com.example.livingai_lg.ui.screens.AnimalProfileScreen
 import com.example.livingai_lg.ui.screens.BuyScreen
 import com.example.livingai_lg.ui.screens.ChooseServiceScreen
@@ -124,6 +127,18 @@ fun NavGraphBuilder.mainNavGraph(navController: NavController) {
             SavedListingsScreen(
                 onNavClick = onNavClick,
                 onBackClick = { navController.popBackStack() })
+        }
+
+        composable(AppScreen.ACCOUNTS) {
+            AccountsScreen(
+                onBackClick = { navController.popBackStack() },
+                onLogout = {
+                    // Navigate to auth graph after logout
+                    navController.navigate(Graph.AUTH) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
         }
 
 

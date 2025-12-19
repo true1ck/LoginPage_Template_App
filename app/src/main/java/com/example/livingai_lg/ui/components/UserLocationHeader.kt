@@ -33,7 +33,8 @@ fun UserLocationHeader(
     user: UserProfile,
     selectedAddressId: String,
     modifier: Modifier = Modifier,
-    onOpenAddressOverlay: () -> Unit
+    onOpenAddressOverlay: () -> Unit,
+    onProfileClick: () -> Unit = {}  // New callback for profile icon click
 ) {
     Row(
         modifier = modifier.wrapContentWidth(),
@@ -41,12 +42,18 @@ fun UserLocationHeader(
     ) {
         val selectedAddress = user.addresses.find { it.id == selectedAddressId } ?: user.addresses.first()
 
-        // Profile image
+        // Profile image - make it clickable
         Box(
             modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape)
-                .background(Color.Black),
+                .background(Color.Black)
+                .clickable(
+                    indication = LocalIndication.current,
+                    interactionSource = remember { MutableInteractionSource() }
+                ) {
+                    onProfileClick()
+                },
             contentAlignment = Alignment.Center
         ) {
             if (user.profileImageUrl != null) {

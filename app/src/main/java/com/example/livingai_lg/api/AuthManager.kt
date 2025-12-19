@@ -39,6 +39,10 @@ class AuthManager(
         return apiClient.updateProfile(name, userType)
     }
 
+    suspend fun logout(): Result<com.example.livingai_lg.api.LogoutResponse> {
+        return apiClient.logout()
+    }
+
     private fun getDeviceId(): String {
         return Settings.Secure.getString(
             context.contentResolver,

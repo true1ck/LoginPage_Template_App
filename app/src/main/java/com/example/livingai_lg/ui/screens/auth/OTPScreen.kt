@@ -48,8 +48,10 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 fun OtpScreen(
     phoneNumber: String,
     name: String,
+    mainViewModel: com.example.livingai_lg.ui.MainViewModel,
     onSuccess: () -> Unit = {},
     onCreateProfile: (name: String) -> Unit = {},
+    onLanding: () -> Unit = {},  // New callback for navigating to landing page
     // Optional signup data for signup flow
     signupState: String? = null,
     signupDistrict: String? = null,
@@ -164,6 +166,8 @@ Column(
                                 .onSuccess { verifyResponse ->
                                     android.util.Log.d("OTPScreen", "OTP verified successfully. Calling signup API...")
                                     // OTP verified successfully - user is now logged in
+                                    // Refresh auth status in MainViewModel so AppNavigation knows user is authenticated
+                                    mainViewModel.refreshAuthStatus()
                                     // Now call signup API to update user with name and location
                                     val signupRequest = SignupRequest(
                                         name = name,
@@ -174,57 +178,76 @@ Column(
                                     )
                                     authManager.signup(signupRequest)
                                         .onSuccess { signupResponse ->
-                                            android.util.Log.d("OTPScreen", "Signup API response: success=${signupResponse.success}, userExists=${signupResponse.userExists}, needsProfile=${signupResponse.needsProfile}")
-                                            // Signup API response - check if successful or user exists
-                                            if (signupResponse.success || signupResponse.userExists == true) {
-                                                // Success - user is created/updated and logged in
-                                                // Check if profile needs completion
-                                                val needsProfile = signupResponse.needsProfile == true || verifyResponse.needsProfile
-                                                android.util.Log.d("OTPScreen", "Signup successful. needsProfile=$needsProfile, navigating...")
+                                            android.util.Log.d("OTPScreen", "Signup API response: success=${signupResponse.success}, userExists=${signupResponse.userExists}, needsProfile=${signupResponse.needsProfile}, isNewAccount=${signupResponse.isNewAccount}")
+                                            // Check if this is a new user account
+                                            val isNewUser = signupResponse.isNewAccount == true
+                                            
+                                            if (isNewUser) {
+                                                // New user - navigate to landing page
+                                                android.util.Log.d("OTPScreen", "New user detected - navigating to landing page")
                                                 try {
-                                                    if (needsProfile) {
-                                                        android.util.Log.d("OTPScreen", "Navigating to create profile screen with name: $name")
-                                                        onCreateProfile(name)
-                                                    } else {
-                                                        android.util.Log.d("OTPScreen", "Navigating to success screen")
-                                                        onSuccess()
-                                                    }
+                                                    onLanding()
                                                 } catch (e: Exception) {
                                                     android.util.Log.e("OTPScreen", "Navigation error: ${e.message}", e)
                                                     Toast.makeText(context, "Navigation error: ${e.message}", Toast.LENGTH_LONG).show()
                                                 }
                                             } else {
-                                                // Signup failed but OTP was verified - user is logged in
-                                                // Navigate to success anyway since verify-otp succeeded
-                                                android.util.Log.d("OTPScreen", "Signup API returned false, but OTP verified. Navigating anyway...")
-                                                val needsProfile = verifyResponse.needsProfile
-                                                try {
-                                                    if (needsProfile) {
-                                                        android.util.Log.d("OTPScreen", "Navigating to create profile screen with name: $name")
-                                                        onCreateProfile(name)
-                                                    } else {
-                                                        android.util.Log.d("OTPScreen", "Navigating to success screen")
-                                                        onSuccess()
+                                                // Existing user or signup update - use existing logic
+                                                if (signupResponse.success || signupResponse.userExists == true) {
+                                                    // Success - user is created/updated and logged in
+                                                    // Check if profile needs completion
+                                                    val needsProfile = signupResponse.needsProfile == true || verifyResponse.needsProfile
+                                                    android.util.Log.d("OTPScreen", "Signup successful. needsProfile=$needsProfile, navigating...")
+                                                    try {
+                                                        if (needsProfile) {
+                                                            android.util.Log.d("OTPScreen", "Navigating to create profile screen with name: $name")
+                                                            onCreateProfile(name)
+                                                        } else {
+                                                            android.util.Log.d("OTPScreen", "Navigating to success screen")
+                                                            onSuccess()
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        android.util.Log.e("OTPScreen", "Navigation error: ${e.message}", e)
+                                                        Toast.makeText(context, "Navigation error: ${e.message}", Toast.LENGTH_LONG).show()
                                                     }
-                                                } catch (e: Exception) {
-                                                    android.util.Log.e("OTPScreen", "Navigation error: ${e.message}", e)
-                                                    Toast.makeText(context, "Navigation error: ${e.message}", Toast.LENGTH_LONG).show()
-                                                }
-                                                // Show warning if signup update failed
-                                                val errorMsg = signupResponse.message
-                                                if (errorMsg != null) {
-                                                    Toast.makeText(context, "Profile update: $errorMsg", Toast.LENGTH_SHORT).show()
+                                                } else {
+                                                    // Signup failed but OTP was verified - user is logged in
+                                                    // Navigate to success anyway since verify-otp succeeded
+                                                    android.util.Log.d("OTPScreen", "Signup API returned false, but OTP verified. Navigating anyway...")
+                                                    val needsProfile = verifyResponse.needsProfile
+                                                    try {
+                                                        if (needsProfile) {
+                                                            android.util.Log.d("OTPScreen", "Navigating to create profile screen with name: $name")
+                                                            onCreateProfile(name)
+                                                        } else {
+                                                            android.util.Log.d("OTPScreen", "Navigating to success screen")
+                                                            onSuccess()
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        android.util.Log.e("OTPScreen", "Navigation error: ${e.message}", e)
+                                                        Toast.makeText(context, "Navigation error: ${e.message}", Toast.LENGTH_LONG).show()
+                                                    }
+                                                    // Show warning if signup update failed
+                                                    val errorMsg = signupResponse.message
+                                                    if (errorMsg != null) {
+                                                        Toast.makeText(context, "Profile update: $errorMsg", Toast.LENGTH_SHORT).show()
+                                                    }
                                                 }
                                             }
                                         }
                                         .onFailure { signupError ->
                                             android.util.Log.e("OTPScreen", "Signup API failed: ${signupError.message}", signupError)
                                             // Signup API failed but OTP was verified - user is logged in
-                                            // Navigate to success anyway since verify-otp succeeded
+                                            // For new users, navigate to landing page
+                                            // For existing users, use existing logic
                                             val needsProfile = verifyResponse.needsProfile
                                             android.util.Log.d("OTPScreen", "Navigating despite signup failure. needsProfile=$needsProfile")
                                             try {
-                                                if (needsProfile) {
+                                                // If this is a signup flow and signup failed, treat as new user
+                                                if (isSignupFlow) {
+                                                    android.util.Log.d("OTPScreen", "Signup flow failed - navigating to landing page")
+                                                    onLanding()
+                                                } else if (needsProfile) {
                                                     android.util.Log.d("OTPScreen", "Navigating to create profile screen with name: $name")
                                                     onCreateProfile(name)
                                                 } else {
@@ -253,6 +276,8 @@ Column(
                             authManager.login(phoneNumber, otp.value)
                                 .onSuccess { response ->
                                     android.util.Log.d("OTPScreen", "Sign-in OTP verified. needsProfile=${response.needsProfile}")
+                                    // Refresh auth status in MainViewModel so AppNavigation knows user is authenticated
+                                    mainViewModel.refreshAuthStatus()
                                     try {
                                         if (isSignInFlow) {
                                             // For existing users, always go to the success screen.

@@ -20,7 +20,7 @@ import com.example.livingai_lg.ui.screens.auth.OtpScreen
 import com.example.livingai_lg.ui.screens.auth.SignInScreen
 import com.example.livingai_lg.ui.screens.auth.SignUpScreen
 
-fun NavGraphBuilder.authNavGraph(navController: NavController) {
+fun NavGraphBuilder.authNavGraph(navController: NavController, mainViewModel: com.example.livingai_lg.ui.MainViewModel) {
     navigation(
         route = Graph.AUTH,
         startDestination = AppScreen.LANDING
@@ -67,6 +67,7 @@ fun NavGraphBuilder.authNavGraph(navController: NavController) {
             OtpScreen(
                 phoneNumber = backStackEntry.arguments?.getString("phoneNumber") ?: "",
                 name = backStackEntry.arguments?.getString("name") ?: "",
+                mainViewModel = mainViewModel,
                 onCreateProfile = {name -> 
                     android.util.Log.d("AuthNavGraph", "Navigating to create profile with name: $name")
                     // Navigate to main graph first without popping, then navigate to specific route
@@ -90,6 +91,19 @@ fun NavGraphBuilder.authNavGraph(navController: NavController) {
                         }
                     } catch (e: Exception) {
                         android.util.Log.e("AuthNavGraph", "Navigation error: ${e.message}", e)
+                    }
+                },
+                onLanding = {
+                    android.util.Log.d("AuthNavGraph", "Navigating to landing page for new user")
+                    // Navigate to landing page within AUTH graph
+                    try {
+                        navController.navigate(AppScreen.LANDING) {
+                            // Pop all screens up to and including the current OTP screen
+                            popUpTo(Graph.AUTH) { inclusive = false }
+                            launchSingleTop = true
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("AuthNavGraph", "Navigation to landing error: ${e.message}", e)
                     }
                 },
                 onSuccess = { 
@@ -136,6 +150,7 @@ fun NavGraphBuilder.authNavGraph(navController: NavController) {
                 signupState = backStackEntry.arguments?.getString("state"),
                 signupDistrict = backStackEntry.arguments?.getString("district"),
                 signupVillage = backStackEntry.arguments?.getString("village"),
+                mainViewModel = mainViewModel,
                 onCreateProfile = {name -> 
                     android.util.Log.d("AuthNavGraph", "Navigating to create profile with name: $name")
                     // Navigate to main graph first without popping, then navigate to specific route
@@ -159,6 +174,19 @@ fun NavGraphBuilder.authNavGraph(navController: NavController) {
                         }
                     } catch (e: Exception) {
                         android.util.Log.e("AuthNavGraph", "Navigation error: ${e.message}", e)
+                    }
+                },
+                onLanding = {
+                    android.util.Log.d("AuthNavGraph", "Navigating to landing page for new user")
+                    // Navigate to landing page within AUTH graph
+                    try {
+                        navController.navigate(AppScreen.LANDING) {
+                            // Pop all screens up to and including the current OTP screen
+                            popUpTo(Graph.AUTH) { inclusive = false }
+                            launchSingleTop = true
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("AuthNavGraph", "Navigation to landing error: ${e.message}", e)
                     }
                 },
                 onSuccess = { 
