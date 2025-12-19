@@ -4,6 +4,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
@@ -28,7 +31,8 @@ import com.example.livingai_lg.ui.screens.auth.LandingScreen
 import com.example.livingai_lg.ui.screens.auth.OtpScreen
 import com.example.livingai_lg.ui.screens.auth.SignInScreen
 import com.example.livingai_lg.ui.screens.auth.SignUpScreen
-
+import com.example.livingai_lg.ui.navigation.authNavGraph
+import com.example.livingai_lg.ui.navigation.mainNavGraph
 
 object AppScreen {
     const val LANDING = "landing"
@@ -55,6 +59,19 @@ object AppScreen {
 
     const val POST_SALE_SURVEY = "post_sale_survey"
 
+    const val SAVED_LISTINGS = "saved_listings"
+
+    const val CONTACTS = "contacts"
+
+    const val CALLS = "calls"
+
+    const val CHAT = "chat"
+
+    const val CHATS = "chats"
+
+    fun chats(contact: String) =
+        "$CHAT/$contact"
+
     fun otp(phone: String, name: String) =
         "$OTP/$phone/$name"
 
@@ -74,23 +91,55 @@ object AppScreen {
 
     fun saleArchive(saleId: String) =
         "$SALE_ARCHIVE/$saleId"
+
 }
 
+object Graph {
+    const val AUTH = "auth"
+    const val MAIN = "auth"
+
+    fun auth(route: String)=
+        "$AUTH/$route"
+
+    fun main(route: String)=
+        "$MAIN/$route"
+}
 @Composable
 fun AppNavigation(
     authState: AuthState
 ) {
+    val navController = rememberNavController()
+    var isLoggedIn = false;
+
     when (authState) {
-        is AuthState.Unauthenticated -> {AuthNavGraph()}
-        is AuthState.Authenticated -> {MainNavGraph()}
+        is AuthState.Unauthenticated -> {isLoggedIn = false; }
+        is AuthState.Authenticated -> {isLoggedIn = true;}
         is AuthState.Unknown -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
         }
-//        AuthState.Loading -> SplashScreen()
     }
-//    val navController = rememberNavController()
+
+    NavHost(
+        navController = navController,
+        startDestination = if (isLoggedIn) Graph.MAIN else Graph.AUTH
+    ) {
+        authNavGraph(navController)
+        mainNavGraph(navController)
+    }
+//    MainNavGraph(navController)
+//    AuthNavGraph(navController)
+//    when (authState) {
+//        is AuthState.Unauthenticated -> {AuthNavGraph()}
+//        is AuthState.Authenticated -> {MainNavGraph()}
+//        is AuthState.Unknown -> {
+//            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+//                CircularProgressIndicator()
+//            }
+//        }
+//        AuthState.Loading -> SplashScreen()
+//    }
 
 //    val onNavClick: (String) -> Unit = { route ->
 //        val currentRoute =

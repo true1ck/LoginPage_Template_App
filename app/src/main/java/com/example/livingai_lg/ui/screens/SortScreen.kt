@@ -1,19 +1,29 @@
 package com.example.livingai_lg.ui.screens
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -39,12 +49,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.livingai_lg.ui.components.SortItem
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SortScreen(
     onBackClick: () -> Unit = {},
-    onSkipClick: () -> Unit = {},
     onApplyClick: (List<SortField>) -> Unit = {},
     onCancelClick: () -> Unit = {}
 ) {
@@ -103,17 +111,13 @@ fun SortScreen(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBackClick) {
-                    Icon(Icons.Default.ArrowBack, null)
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color(0xFF0A0A0A)
+                    )
                 }
                 Text("Sort By", fontSize = 32.sp)
-            }
-
-            TextButton(onClick = onSkipClick) {
-                Text(
-                    "Skip",
-                    textDecoration = TextDecoration.Underline,
-                    fontSize = 20.sp
-                )
             }
         }
 

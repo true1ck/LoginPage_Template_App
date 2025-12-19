@@ -16,16 +16,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.livingai_lg.ui.theme.AppTypography
 
 @Composable
 fun OptionCard(
     label: String,
-    icon: Int,
+    icon: Any,
     iconBackgroundColor: Color,
+    iconTint: Color = Color.Unspecified,
     onClick: () -> Unit
 ) {
     Box(
@@ -54,17 +57,28 @@ fun OptionCard(
                     .background(iconBackgroundColor, RoundedCornerShape(14.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    painter = painterResource(id = icon),
-                    contentDescription = label,
-                    tint = Color.Unspecified
-                )
+                when (icon) {
+                    is ImageVector -> {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = label,
+                            tint = iconTint
+                        )
+                    }
+                    is Int -> {
+                        Icon(
+                            painter = painterResource(icon),
+                            contentDescription = label,
+                            tint = Color.Unspecified
+                        )
+                    }
+                }
             }
 
             // Label
             Text(
                 text = label,
-                fontSize = 16.sp,
+                fontSize = AppTypography.Body,
                 fontWeight = FontWeight.Normal,
                 color = Color(0xFF0A0A0A),
                 modifier = Modifier.weight(1f)

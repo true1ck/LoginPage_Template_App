@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -24,6 +26,7 @@ import com.example.livingai_lg.ui.components.OptionCard
 
 import com.example.livingai_lg.ui.components.backgrounds.StoreBackground
 import com.example.livingai_lg.ui.models.profileTypes
+import com.example.livingai_lg.ui.theme.AppTypography
 import kotlinx.coroutines.launch
 
 
@@ -75,7 +78,7 @@ fun CreateProfileScreen(
             ) {
                 Text(
                     text = "Create Profile",
-                    fontSize = 36.sp,
+                    fontSize = AppTypography.Display,
                     fontWeight = FontWeight.Medium,
                     color = Color(0xFF0A0A0A)
                 )
@@ -84,7 +87,7 @@ fun CreateProfileScreen(
 
                 Text(
                     text = "Choose Profile Type",
-                    fontSize = 16.sp,
+                    fontSize = AppTypography.Body,
                     fontWeight = FontWeight.Medium,
                     color = Color(0xFF0A0A0A).copy(alpha = 0.8f)
                 )
@@ -105,7 +108,8 @@ fun CreateProfileScreen(
                         icon = profile.icon,
                         iconBackgroundColor = profile.backgroundColor,
                         onClick = {
-                            updateProfile(profile.id)
+                            onProfileSelected(profile.id)
+                            //updateProfile(profile.id)
                         }
                     )
                 }

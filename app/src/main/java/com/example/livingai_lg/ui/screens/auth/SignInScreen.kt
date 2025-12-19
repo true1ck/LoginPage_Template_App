@@ -39,7 +39,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SignInScreen(
     onSignUpClick: () -> Unit = {},
-    onSignInClick: (phone: String, name: String) -> Unit = {},
+    onSignInClick: (phone: String, name: String) -> Unit = {_,_->},
 ) {
     val phoneNumber = remember { mutableStateOf("") }
     val isValid = phoneNumber.value.length == 10

@@ -1,5 +1,6 @@
 package com.example.livingai_lg.ui.screens
 
+import androidx.compose.foundation.Image
 import com.example.livingai_lg.ui.components.ImageCarousel
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
@@ -9,11 +10,21 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.StarHalf
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarHalf
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -26,9 +37,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.zIndex
 import com.example.livingai_lg.ui.models.Animal
 import com.example.livingai_lg.ui.utils.formatPrice
@@ -38,6 +52,11 @@ import com.example.livingai_lg.ui.components.FloatingActionBar
 import com.example.livingai_lg.ui.models.sampleAnimals
 import com.example.livingai_lg.ui.utils.formatAge
 import com.example.livingai_lg.R
+import com.example.livingai_lg.ui.components.ActionPopup
+import com.example.livingai_lg.ui.components.RatingStars
+import com.example.livingai_lg.ui.navigation.AppScreen
+import com.example.livingai_lg.ui.theme.AppTypography
+import com.example.livingai_lg.ui.utils.formatDistance
 
 
 @Composable
@@ -45,12 +64,15 @@ fun AnimalProfileScreen(
     animalId: String,
     onBackClick: () -> Unit = {},
     onSellerClick: (sellerId: String) -> Unit = {},
+    onNavClick: (route: String) -> Unit = {}
 ) {
+    var showSavedPopup by remember { mutableStateOf(false) }
     val animal = sampleAnimals.find { animal -> animal.id == animalId } ?: Animal(id = "null")
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF7F4EE))
+            .padding(12.dp)
     ) {
         Column(
             modifier = Modifier
@@ -62,7 +84,7 @@ fun AnimalProfileScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(500.dp)
+                    .height(350.dp)
                     .shadow(4.dp)
             ) {
                 // Main image
@@ -92,19 +114,31 @@ fun AnimalProfileScreen(
                 Row(
                     modifier = Modifier
                         .align(Alignment.TopStart)
-                        .padding(start = 16.dp, top = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        .padding(start = 5.dp, top = 5.dp)
+                        .shadow(
+                            elevation = 6.dp,
+                            shape = RoundedCornerShape(50),
+                            ambientColor = Color.Black.copy(alpha = 0.4f),
+                            spotColor = Color.Black.copy(alpha = 0.4f)
+                        )
+                        .background(
+                            color = Color.Black.copy(alpha = 0.35f), // 👈 light but effective
+                            shape = RoundedCornerShape(50)
+                        )
+                        .padding(horizontal = 6.dp, vertical = 3.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_view),
                         contentDescription = "Views",
                         tint = Color.White,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(16.dp)
                     )
+
                     Text(
                         text = formatViews(animal.views),
-                        fontSize = 12.sp,
+                        fontSize = AppTypography.BodySmall,
                         fontWeight = FontWeight.Normal,
                         color = Color.White
                     )
@@ -120,25 +154,41 @@ fun AnimalProfileScreen(
                 ) {
                     Text(
                         text = "${animal.name}, ${formatAge(animal.age)}",
-                        fontSize = 30.sp,
+                        fontSize = AppTypography.Title,
                         fontWeight = FontWeight.Normal,
-                        color = Color.White
+                        color = Color.White,
+                        style = LocalTextStyle.current.copy(
+                            shadow = Shadow(
+                                color = Color.Black.copy(alpha = 0.75f),
+                                offset = Offset(0f, 2f),
+                                blurRadius = 6f
+                            )
+                        )
                     )
                     Text(
-                        text = "${animal.breed} • ${animal.location}, ${animal.distance}".uppercase(),
-                        fontSize = 12.sp,
+                        text = "${animal.breed} • ${animal.location}, ${formatDistance(animal.distance)}".uppercase(),
+                        fontSize = AppTypography.Body,
                         fontWeight = FontWeight.Normal,
                         color = Color.White.copy(alpha = 0.7f),
-                        letterSpacing = 1.2.sp
+                        letterSpacing = 1.2.sp,
+                        style = LocalTextStyle.current.copy(
+                            shadow = Shadow(
+                                color = Color.Black.copy(alpha = 0.6f),
+                                offset = Offset(0f, 1.5f),
+                                blurRadius = 4f
+                            )
+                        )
                     )
+                    Spacer(modifier = Modifier.height(4.dp))
+
                 }
 
                 // AI Score badge (bottom left)
                 Row(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
-                        .padding(start = 0.dp, bottom = 5.dp)
-                        .height(48.dp)
+                        .padding(start = 5.dp, bottom = 5.dp)
+                        .height(60.dp)
                         .border(2.dp, Color(0xFF717182), CircleShape)
                         .padding(horizontal = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -147,7 +197,7 @@ fun AnimalProfileScreen(
                     AIScoreCircle(score = animal.aiScore ?: 0f)
                     Text(
                         text = "AI Score",
-                        fontSize = 18.sp,
+                        fontSize = AppTypography.Body,
                         fontWeight = FontWeight.Normal,
                         color = Color.White
                     )
@@ -159,11 +209,12 @@ fun AnimalProfileScreen(
                         append("At Display: ")
                         append(animal.displayLocation)
                     },
-                    fontSize = 8.sp,
+                    fontSize = AppTypography.Caption,
                     fontWeight = FontWeight.Normal,
-                    color = Color.White,
+                    color = Color.White.copy(alpha = 0.7f),
                     lineHeight = 13.sp,
                     textDecoration = TextDecoration.Underline,
+                    textAlign = TextAlign.Right,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(end = 16.dp, bottom = 8.dp)
@@ -190,8 +241,8 @@ fun AnimalProfileScreen(
                     ) {
                         Text(
                             text = formatPrice(animal.price),
-                            fontSize = 30.sp,
-                            fontWeight = FontWeight.Medium,
+                            fontSize = AppTypography.Title,
+                            fontWeight = FontWeight.Bold,
                             color = Color(0xFF0A0A0A)
                         )
 
@@ -204,12 +255,12 @@ fun AnimalProfileScreen(
                                 Icon(
                                     painter = painterResource(R.drawable.ic_thumbs_up),
                                     contentDescription = "Fair Price",
-                                    tint = Color(0xFF0A0A0A),
+                                    tint = Color(0xFF00C950),
                                     modifier = Modifier.size(15.dp)
                                 )
                                 Text(
                                     text = "Fair Price",
-                                    fontSize = 12.sp,
+                                    fontSize = AppTypography.Caption,
                                     fontWeight = FontWeight.Normal,
                                     color = Color(0xFF00C950)
                                 )
@@ -219,7 +270,7 @@ fun AnimalProfileScreen(
 
                     Column(
                         horizontalAlignment = Alignment.End,
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                         modifier = Modifier.clickable(
                                 indication = LocalIndication.current,
                         interactionSource = remember { MutableInteractionSource() }
@@ -229,7 +280,7 @@ fun AnimalProfileScreen(
                      {
                         Text(
                             text = "Sold By: ${animal.sellerName}",
-                            fontSize = 16.sp,
+                            fontSize = AppTypography.Body,
                             fontWeight = FontWeight.Normal,
                             color = Color(0xFF0A0A0A)
                         )
@@ -239,19 +290,13 @@ fun AnimalProfileScreen(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            repeat(5) { index ->
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_star),
-                                    contentDescription = null,
-                                    tint = if (index < (animal.rating ?: 0).toInt()) Color(
-                                        0xFFDE9A07
-                                    ) else Color(0xFFDE9A07),
-                                    modifier = Modifier.size(12.dp)
-                                )
-                            }
+                            RatingStars(
+                                rating = animal.rating ?: 0f,
+                                starSize = 12.dp
+                            )
                             Text(
                                 text = "${animal.rating} (${animal.ratingCount} Ratings)",
-                                fontSize = 10.sp,
+                                fontSize = AppTypography.Caption,
                                 fontWeight = FontWeight.Normal,
                                 color = Color(0xFF0A0A0A)
                             )
@@ -267,13 +312,13 @@ fun AnimalProfileScreen(
                 ) {
                     Text(
                         text = "About",
-                        fontSize = 16.sp,
+                        fontSize = AppTypography.Body,
                         fontWeight = FontWeight.Medium,
                         color = Color(0xFF09090B).copy(alpha = 0.5f)
                     )
                     Text(
                         text = animal.description ?: "",
-                        fontSize = 14.sp,
+                        fontSize = AppTypography.BodySmall,
                         fontWeight = FontWeight.Normal,
                         color = Color(0xFF09090B),
                         lineHeight = 24.sp
@@ -297,23 +342,42 @@ fun AnimalProfileScreen(
                 // Ad space banner
                 AdSpaceBanner()
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(64.dp))
             }
         }
         FloatingActionBar(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 24.dp)
-                .offset(y = (-20).dp)
+                .padding(bottom = 10.dp)
+                .offset(y = (-10).dp)
                 .zIndex(10f), // 👈 ensure it floats above everything
             onChatClick = { /* TODO */ },
             onCallClick = { /* TODO */ },
             onLocationClick = { /* TODO */ },
-            onBookmarkClick = { /* TODO */ }
+            onBookmarkClick = { showSavedPopup = true }
         )
 
+        ActionPopup(
+            visible = showSavedPopup,
+            text = "Saved",
+            icon = Icons.Default.Bookmark,
+            backgroundColor = Color.Black,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = 96.dp),
+            onClick = {
+                onNavClick(AppScreen.SAVED_LISTINGS)
+                // Navigate to saved items
+            },
+            onDismiss = {
+                showSavedPopup = false
+            }
+        )
     }
+
 }
+
+fun Modifier.Companion.align(bottomEnd: Alignment) {}
 
 @Composable
 fun AIScoreCircle(score: Float) {

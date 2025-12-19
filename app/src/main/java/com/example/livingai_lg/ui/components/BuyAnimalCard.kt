@@ -6,15 +6,22 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -26,6 +33,7 @@ import com.example.livingai_lg.ui.utils.formatDistance
 import com.example.livingai_lg.ui.utils.formatPrice
 import com.example.livingai_lg.ui.utils.formatViews
 import com.example.livingai_lg.R
+import com.example.livingai_lg.ui.theme.AppTypography
 
 @Composable
 fun BuyAnimalCard(
@@ -34,6 +42,7 @@ fun BuyAnimalCard(
     onSavedChange: (Boolean) -> Unit,
     onProductClick: () -> Unit,
     onSellerClick:(sellerId: String)-> Unit,
+    onBookmarkClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -46,163 +55,204 @@ fun BuyAnimalCard(
                 Color(0xFF000000).copy(alpha = 0.1f),
                 RoundedCornerShape(14.dp)
             )
-            .clickable(
-                indication = LocalIndication.current,
-                interactionSource = remember { MutableInteractionSource() },
-                onClick = onProductClick
-            )
+
     ) {
         Column {
-            // Image
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(257.dp)
-            ) {
-                ImageCarousel(
-                    imageUrls = product.imageUrl ?: emptyList(),
-                    modifier = Modifier.fillMaxSize()
-                )
-
-                // Views
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                       painter = painterResource(R.drawable.ic_view),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text(formatViews(product.views), fontSize = 10.sp, color = Color.White)
-                }
-
-                // Distance
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_location),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(12.dp)
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text(formatDistance( product.distance), fontSize = 16.sp, color = Color.White)
-                }
-            }
-
-            // Content
             Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text(
-                            product.name?: "",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            formatPrice(product.price),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-
-                    Column(horizontalAlignment = Alignment.End,modifier = Modifier.clickable(
-                        indication = LocalIndication.current,
-                        interactionSource = remember { MutableInteractionSource() }
-                    ) {
-                        onSellerClick(product.sellerId?:"")
-                    }) {
-                        Text("Sold By: ${product.sellerName}", fontSize = 13.sp)
-                        Text(product.sellerType?: "???", fontSize = 13.sp)
-                    }
-                }
-
-                // Rating
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_star),
-                        contentDescription = null,
-                        tint = Color(0xFFDE9A07),
-                        modifier = Modifier.size(8.dp)
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text(
-                        "${product.rating} (${product.ratingCount} Ratings)",
-                        fontSize = 8.sp
-                    )
-                }
-
-                // Badges
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-
-                        Box(
-                            modifier = Modifier
-                                .background(Color(0xFFF5F5F5), RoundedCornerShape(8.dp))
-                                .padding(horizontal = 8.dp, vertical = 6.dp)
-                        ) {
-                            val scoreString = "AI Score: ${product.aiScore?: 0}"
-                            Text(scoreString, fontSize = 12.sp)
-                        }
-                    Box(
-                        modifier = Modifier
-                            .background(Color(0xFFF5F5F5), RoundedCornerShape(8.dp))
-                            .padding(horizontal = 8.dp, vertical = 6.dp)
-                    ) {
-                        Text("placeholder", fontSize = 12.sp)
-                    }
-                    if(product.milkCapacity != null) {
-                        Box(
-                            modifier = Modifier
-                                .background(Color(0xFFF5F5F5), RoundedCornerShape(8.dp))
-                                .padding(horizontal = 8.dp, vertical = 6.dp)
-                        ) {
-                            Text("Milk Capacity: ${product.milkCapacity}L", fontSize = 12.sp)
-                        }
-                    }
-                }
-
-                // Description
-                Text(
-                    product.description?: "",
-                    fontSize = 14.sp,
-                    color = Color(0xFF717182),
-                    lineHeight = 20.sp
+                modifier = Modifier.clickable(
+                    indication = LocalIndication.current,
+                    interactionSource = remember { MutableInteractionSource() },
+                    onClick = onProductClick
                 )
+            ) {
 
-                // Actions
+                // Image
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(257.dp)
+                ) {
+                    ImageCarousel(
+                        imageUrls = product.imageUrl ?: emptyList(),
+                        modifier = Modifier.fillMaxSize()
+                    )
+
+                    // Views
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(6.dp)
+                            .shadow(
+                                elevation = 6.dp,
+                                shape = RoundedCornerShape(50),
+                                ambientColor = Color.Black.copy(alpha = 0.4f),
+                                spotColor = Color.Black.copy(alpha = 0.4f)
+                            )
+                            .background(
+                                color = Color.Black.copy(alpha = 0.35f), // 👈 light but effective
+                                shape = RoundedCornerShape(50)
+                            )
+                            .padding(horizontal = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Visibility,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp).shadow(
+                                elevation = 6.dp,
+                                shape = CircleShape,
+                                clip = false
+                            )
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(formatViews(product.views), fontSize = AppTypography.Caption, color = Color.White,style = LocalTextStyle.current.copy(
+                        ))
+                    }
+
+                    // Distance
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(6.dp)
+                            .shadow(
+                                elevation = 6.dp,
+                                shape = RoundedCornerShape(50),
+                                ambientColor = Color.Black.copy(alpha = 0.4f),
+                                spotColor = Color.Black.copy(alpha = 0.4f)
+                            )
+                            .background(
+                                color = Color.Black.copy(alpha = 0.35f), // 👈 light but effective
+                                shape = RoundedCornerShape(50)
+                            )
+                            .padding(horizontal = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.LocationOn,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            formatDistance(product.distance),
+                            fontSize = AppTypography.Body,
+                            color = Color.White,
+                        )
+                    }
+                }
+
+                // Content
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(
+                                product.name ?: "",
+                                fontSize = AppTypography.Body,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                formatPrice(product.price),
+                                fontSize = AppTypography.Body,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+
+                        Column(
+                            horizontalAlignment = Alignment.End, modifier = Modifier.clickable(
+                            indication = LocalIndication.current,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) {
+                            onSellerClick(product.sellerId ?: "")
+                        }) {
+                            Text("Sold By: ${product.sellerName}", fontSize = AppTypography.BodySmall)
+                            Text(product.sellerType ?: "???", fontSize = AppTypography.BodySmall)
+                        }
+                    }
+
+                    // Rating
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RatingStars(product.rating?:0f, starSize = 12.dp)
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            "${product.rating} (${product.ratingCount} Ratings)",
+                            fontSize = AppTypography.Caption
+                        )
+                    }
+
+                    // Badges
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+
+                        Box(
+                            modifier = Modifier
+                                .background(Color(0xFFF5F5F5), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 8.dp, vertical = 6.dp)
+                        ) {
+                            Row {
+                                Text("AI Score: ", fontSize = AppTypography.Caption)
+                                val scoreString = "${product.aiScore ?: 0}"
+                                Text(scoreString, fontSize = AppTypography.Caption, fontWeight = FontWeight.Bold)
+
+                            }
+                            }
+
+                        if (product.milkCapacity != null) {
+                            Box(
+                                modifier = Modifier
+                                    .background(Color(0xFFF5F5F5), RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                            ) {
+                                Row {
+                                    Text(
+                                        "Milk Capacity:",
+                                        fontSize = AppTypography.Caption
+                                    )
+                                    Text(
+                                        "${product.milkCapacity}L",
+                                        fontSize = AppTypography.Caption,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Description
+                    Text(
+                        product.description ?: "",
+                        fontSize = 14.sp,
+                        color = Color(0xFF717182),
+                        lineHeight = 20.sp
+                    )
+
+                    // Actions
 //                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
 //                    ActionButton(R.drawable.ic_chat, "Chat")
 //                    ActionButton(R.drawable.ic_phone, "Call")
 //                    ActionButton(R.drawable.ic_location, "Location")
 //                    ActionButton(R.drawable.ic_bookmark_plus, "Bookmark")
 //                }
-                FloatingActionBar(
-                    modifier = Modifier
-                        .padding(bottom = 12.dp)
-                        .zIndex(10f), // 👈 ensure it floats above everything
-                    onChatClick = { /* TODO */ },
-                    onCallClick = { /* TODO */ },
-                    onLocationClick = { /* TODO */ },
-                    onBookmarkClick = { /* TODO */ }
-                )
 
 
+                }
             }
+            FloatingActionBar(
+                modifier = Modifier
+                    .padding(bottom = 12.dp)
+                    .zIndex(10f), // 👈 ensure it floats above everything
+                showContainer = false,
+                onChatClick = { /* TODO */ },
+                onCallClick = { /* TODO */ },
+                onLocationClick = { /* TODO */ },
+                onBookmarkClick = onBookmarkClick
+            )
         }
     }
 }

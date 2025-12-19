@@ -1,10 +1,13 @@
 package com.example.livingai_lg.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavController
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.livingai_lg.ui.screens.SaleArchiveScreen
@@ -13,19 +16,16 @@ import com.example.livingai_lg.ui.screens.auth.OtpScreen
 import com.example.livingai_lg.ui.screens.auth.SignInScreen
 import com.example.livingai_lg.ui.screens.auth.SignUpScreen
 
-@Composable
-fun AuthNavGraph(
-    navController: NavHostController = rememberNavController()
-) {
-    NavHost(
-        navController = navController,
+fun NavGraphBuilder.authNavGraph(navController: NavController) {
+    navigation(
+        route = Graph.AUTH,
         startDestination = AppScreen.LANDING
     ) {
         composable(AppScreen.LANDING) {
             LandingScreen(
                 onSignUpClick = { navController.navigate(AppScreen.SIGN_UP) },
                 onSignInClick = { navController.navigate(AppScreen.SIGN_IN) },
-                onGuestClick = { navController.navigate(AppScreen.CREATE_PROFILE) }
+                onGuestClick = { navController.navigate(Graph.main(AppScreen.createProfile("guest"))) }
             )
         }
 
@@ -63,7 +63,8 @@ fun AuthNavGraph(
             OtpScreen(
                 phoneNumber = backStackEntry.arguments?.getString("phoneNumber") ?: "",
                 name = backStackEntry.arguments?.getString("name") ?: "",
-                onSuccess = { navController.navigate(AppScreen.chooseService("1"))}
+                onCreateProfile = {name -> navController.navigate(Graph.main(AppScreen.createProfile(name)))},
+                onSuccess = { navController.navigate(Graph.auth(AppScreen.chooseService("1")))}
             )
         }
     }

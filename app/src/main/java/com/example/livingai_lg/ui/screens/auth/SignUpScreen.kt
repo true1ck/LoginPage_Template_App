@@ -52,7 +52,7 @@ private fun String.isValidPhoneNumber(): Boolean {
 @Composable
 fun SignUpScreen(
     onSignInClick: () -> Unit = {},
-    onSignUpClick: (phone: String, name: String) -> Unit = {}
+    onSignUpClick: (phone: String, name: String) -> Unit = {_,_->}
 ) {
     var formData by remember { mutableStateOf(SignUpFormData()) }
 

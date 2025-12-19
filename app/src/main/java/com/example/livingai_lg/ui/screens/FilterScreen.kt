@@ -1,5 +1,9 @@
 package com.example.livingai_lg.ui.screens
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
@@ -24,14 +28,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.livingai_lg.ui.components.DropdownInput
 import com.example.livingai_lg.ui.components.RangeFilter
+import com.example.livingai_lg.ui.theme.AppTypography
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FilterScreen(
     onBackClick: () -> Unit = {},
-    onSkipClick: () -> Unit = {},
     onSubmitClick: () -> Unit = {},
-    onCancelClick: () -> Unit = {}
+    onCancelClick: () -> Unit = {},
 ) {
     var selectedAnimal by remember { mutableStateOf("") }
     var selectedBreed by remember { mutableStateOf("") }
@@ -104,16 +108,6 @@ fun FilterScreen(
                         color = Color.Black
                     )
                 }
-
-                TextButton(onClick = onSkipClick) {
-                    Text(
-                        text = "Skip",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = Color(0xFF4A5565),
-                        textDecoration = TextDecoration.Underline
-                    )
-                }
             }
         }
 
@@ -122,7 +116,7 @@ fun FilterScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 32.dp)
                 .padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
@@ -130,117 +124,43 @@ fun FilterScreen(
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    text = "Animal",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = Color.Black
-                )
-
-                ExposedDropdownMenuBox(
+                DropdownInput(
+                    label = "Animal",
+                    selected = selectedAnimal,
+                    options = listOf("Cow", "Buffalo", "Goat", "Sheep"),
                     expanded = animalExpanded,
-                    onExpandedChange = { animalExpanded = it }
-                ) {
-                    OutlinedTextField(
-                        value = selectedAnimal,
-                        onValueChange = {},
-                        readOnly = true,
-                        placeholder = {
-                            Text(
-                                "Select Animal",
-                                color = Color(0xFF717182),
-                                fontSize = 16.sp
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor(),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedContainerColor = Color.White,
-                            focusedContainerColor = Color.White,
-                            unfocusedBorderColor = Color(0x1A000000),
-                            focusedBorderColor = Color(0x1A000000)
-                        )
-                    )
-                    ExposedDropdownMenu(
-                        expanded = animalExpanded,
-                        onDismissRequest = { animalExpanded = false }
-                    ) {
-                        listOf("Cow", "Buffalo", "Goat", "Sheep").forEach { animal ->
-                            DropdownMenuItem(
-                                text = { Text(animal) },
-                                onClick = {
-                                    selectedAnimal = animal
-                                    animalExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
+                    onExpandedChange = { animalExpanded = it },
+                    onSelect = { item ->
+                        selectedAnimal = item
+                        animalExpanded = false
+                    },
+                    placeholder = "Select Animal",   // <--- half width
+                )
             }
 
             // Breed Section
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    text = "Breed",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = Color.Black
-                )
-
-                ExposedDropdownMenuBox(
+                DropdownInput(
+                    label = "Breed",
+                    selected = selectedBreed,
+                    options = listOf("Holstein", "Jersey", "Gir", "Sahiwal"),
                     expanded = breedExpanded,
-                    onExpandedChange = { breedExpanded = it }
-                ) {
-                    OutlinedTextField(
-                        value = selectedBreed,
-                        onValueChange = {},
-                        readOnly = true,
-                        placeholder = {
-                            Text(
-                                "Select Breed",
-                                color = Color(0xFF717182),
-                                fontSize = 16.sp
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor(),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedContainerColor = Color.White,
-                            focusedContainerColor = Color.White,
-                            unfocusedBorderColor = Color(0x1A000000),
-                            focusedBorderColor = Color(0x1A000000)
-                        )
-                    )
-                    ExposedDropdownMenu(
-                        expanded = breedExpanded,
-                        onDismissRequest = { breedExpanded = false }
-                    ) {
-                        listOf("Holstein", "Jersey", "Gir", "Sahiwal").forEach { breed ->
-                            DropdownMenuItem(
-                                text = { Text(breed) },
-                                onClick = {
-                                    selectedBreed = breed
-                                    breedExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
+                    onExpandedChange = { breedExpanded = it },
+                    onSelect = { item ->
+                        selectedBreed = item
+                        breedExpanded = false
+                    },
+                    placeholder = "Select Breed",   // <--- half width
+                )
             }
 
             // Price and Age Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp) // 👈 reduce spacing
-            ) {
+
                 Column(
-                    modifier = Modifier.weight(1f)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+
                 ) {
                     RangeFilter(
                         modifier = Modifier.fillMaxWidth(), // 👈 important
@@ -257,7 +177,8 @@ fun FilterScreen(
                 }
 
                 Column(
-                    modifier = Modifier.weight(1f)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+
                 ) {
                     RangeFilter(
                         modifier = Modifier.fillMaxWidth(),
@@ -273,17 +194,13 @@ fun FilterScreen(
                         }
                     )
                 }
-            }
+
 
             // Distance and Gender Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(64.dp)
-            ) {
+
                 // Distance Section
                 Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     DropdownInput(
                         label = "Distance",
@@ -301,8 +218,7 @@ fun FilterScreen(
 
                 // Gender Section
                 Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     DropdownInput(
                         label = "Gender",
@@ -319,7 +235,7 @@ fun FilterScreen(
                 }
 
 
-            }
+
 
             // Pregnancy Status Section
             Column(
@@ -327,7 +243,7 @@ fun FilterScreen(
             ) {
                 Text(
                     text = "Pregnancy Status",
-                    fontSize = 16.sp,
+                    fontSize = AppTypography.Body,
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFF364153)
                 )
@@ -352,12 +268,9 @@ fun FilterScreen(
                 }
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp) // 👈 reduce spacing
-            ) {
+
                 Column(
-                    modifier = Modifier.weight(1f)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     RangeFilter(
                         modifier = Modifier.fillMaxWidth(), // 👈 important
@@ -374,7 +287,7 @@ fun FilterScreen(
                 }
 
                 Column(
-                    modifier = Modifier.weight(1f)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     RangeFilter(
                         modifier = Modifier.fillMaxWidth(),
@@ -390,7 +303,7 @@ fun FilterScreen(
                         }
                     )
                 }
-            }
+
 
             // Calving Number Section
             Column(
@@ -469,7 +382,7 @@ fun FilterScreen(
                 ) {
                     Text(
                         text = "Submit",
-                        fontSize = 16.sp,
+                        fontSize = AppTypography.Body,
                         fontWeight = FontWeight.Normal
                     )
                 }
@@ -492,7 +405,7 @@ fun FilterScreen(
                 ) {
                     Text(
                         text = "Cancel",
-                        fontSize = 16.sp,
+                        fontSize = AppTypography.Body,
                         fontWeight = FontWeight.Normal
                     )
                 }

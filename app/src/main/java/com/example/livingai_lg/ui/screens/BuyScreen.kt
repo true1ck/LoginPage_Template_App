@@ -1,12 +1,20 @@
 package com.example.livingai_lg.ui.screens
 
+import androidx.compose.foundation.Indication
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,6 +33,12 @@ import com.example.livingai_lg.ui.models.mainBottomNavItems
 import com.example.livingai_lg.ui.models.sampleAnimals
 import com.example.livingai_lg.ui.models.userProfile
 import com.example.livingai_lg.R
+import com.example.livingai_lg.ui.components.ActionPopup
+import com.example.livingai_lg.ui.components.AddressSelectorOverlay
+import com.example.livingai_lg.ui.components.NotificationsOverlay
+import com.example.livingai_lg.ui.components.SortOverlay
+import com.example.livingai_lg.ui.models.sampleNotifications
+import com.example.livingai_lg.ui.navigation.AppScreen
 
 @Composable
 fun BuyScreen(
@@ -37,10 +51,13 @@ fun BuyScreen(
 ) {
     val selectedAnimalType = remember { mutableStateOf<String?>(null) }
     val isSaved = remember { mutableStateOf(false) }
-
-
-
-
+    var showAddressSelector by remember { mutableStateOf(false) }
+    var selectedAddressId by remember { mutableStateOf<String?>(userProfile.addresses.find { address -> address.isPrimary }?.id) }
+    val showFilterOverlay = remember { mutableStateOf(false) }
+    val showSortOverlay = remember { mutableStateOf(false) }
+    var showSavedPopup by remember { mutableStateOf(false) }
+    var showNotifications by remember { mutableStateOf(false) }
+    val sampleNotifications = sampleNotifications
 
     Box(
         modifier = Modifier
@@ -74,10 +91,8 @@ fun BuyScreen(
 
                         UserLocationHeader(
                             user = userProfile,
-                            onAddressSelected = {
-                                // optional: reload listings, persist selection, etc.
-                            },
-                            onAddNewClick = {}
+                            onOpenAddressOverlay = { showAddressSelector = true },
+                            selectedAddressId = selectedAddressId?:"1",
                         )
 
                         // Right-side actions (notifications, etc.)
@@ -86,6 +101,10 @@ fun BuyScreen(
                             contentDescription = "Notifications",
                             tint = Color.Black,
                             modifier = Modifier.size(24.dp)
+                                .clickable(
+                                indication = LocalIndication.current,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ){ showNotifications = true }
                         )
                     }
 //                    Row(
@@ -129,8 +148,10 @@ fun BuyScreen(
                             .padding(horizontal = 22.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        SortButton(onSortClick)
-                        FilterButton(onFilterClick)
+                        SortButton(
+                            onClick = { showSortOverlay.value = true }
+                        )
+                        FilterButton(onClick = { showFilterOverlay.value = true })
                     }
 
                     sampleAnimals.forEach { animal ->
@@ -142,7 +163,8 @@ fun BuyScreen(
                             isSaved = isSaved.value,
                             onSavedChange = { isSaved.value = it },
                             onProductClick = { onProductClick(animal.id)},
-                            onSellerClick = onSellerClick
+                            onSellerClick = onSellerClick,
+                            onBookmarkClick = { showSavedPopup = true }
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -160,6 +182,62 @@ fun BuyScreen(
             }
         }
 
+        AddressSelectorOverlay(
+            visible = showAddressSelector,
+            addresses = userProfile.addresses,
+            selectedAddressId = selectedAddressId,
+            onSelect = { addressId ->
+                selectedAddressId = addressId
+                showAddressSelector = false
+            },
+            onClose = { showAddressSelector = false }
+        )
+
+        SortOverlay(
+            visible = showSortOverlay.value,
+            onApplyClick = { selected ->
+                // TODO: apply sort
+            },
+            onDismiss = { showSortOverlay.value = false }
+        )
+
+        FilterOverlay(
+            visible = showFilterOverlay.value,
+            onDismiss = { showFilterOverlay.value = false },
+            onSubmitClick = {
+                // apply filters
+            }
+        )
+
+        ActionPopup(
+            visible = showSavedPopup,
+            text = "Saved",
+            icon = Icons.Default.Bookmark,
+            backgroundColor = Color.Black,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = 96.dp),
+            onClick = {
+                onNavClick(AppScreen.SAVED_LISTINGS)
+                // Navigate to saved items
+            },
+            onDismiss = {
+                showSavedPopup = false
+            }
+        )
+
+
+        NotificationsOverlay(
+            visible = showNotifications,
+            notifications = sampleNotifications,
+            onClose = { showNotifications = false },
+            onDismiss = { id ->
+                // remove notification from list
+            },
+            onNotificationClick = { id ->
+                // optional navigation
+            }
+        )
 
     }
 }

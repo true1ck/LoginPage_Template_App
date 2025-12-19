@@ -25,17 +25,23 @@ import androidx.compose.ui.unit.sp
 import com.example.livingai_lg.R
 
 @Composable
-fun SortButton(onSortClick: () -> Unit) {
+fun SortButton(
+    onClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .height(36.dp)
-            .border(1.078.dp, Color(0xFF000000).copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+            .border(
+                1.078.dp,
+                Color(0xFF000000).copy(alpha = 0.1f),
+                RoundedCornerShape(8.dp)
+            )
             .background(Color.White, RoundedCornerShape(8.dp))
             .padding(horizontal = 8.dp)
             .clickable(
                 indication = LocalIndication.current,
                 interactionSource = remember { MutableInteractionSource() },
-                onClick = onSortClick,
+                onClick = onClick
             ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)

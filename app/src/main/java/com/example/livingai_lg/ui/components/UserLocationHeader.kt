@@ -31,23 +31,15 @@ import com.example.livingai_lg.R
 @Composable
 fun UserLocationHeader(
     user: UserProfile,
+    selectedAddressId: String,
     modifier: Modifier = Modifier,
-    onAddressSelected: (UserAddress) -> Unit = {},
-    onAddNewClick: () -> Unit = {} // future navigation hook
+    onOpenAddressOverlay: () -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
-
-    var selectedAddress by remember {
-        mutableStateOf(
-            user.addresses.firstOrNull { it.isPrimary }
-                ?: user.addresses.first()
-        )
-    }
-
     Row(
         modifier = modifier.wrapContentWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        val selectedAddress = user.addresses.find { it.id == selectedAddressId } ?: user.addresses.first()
 
         // Profile image
         Box(
@@ -75,79 +67,38 @@ fun UserLocationHeader(
 
         Spacer(modifier = Modifier.width(12.dp))
 
-        // Anchor ONLY the text section
-        Box {
-            Column(
-                modifier = Modifier
-                    .clickable(
-                        indication = LocalIndication.current,
-                        interactionSource = remember { MutableInteractionSource() }
-                    ) { expanded = true }
+        // Address + arrow (click opens overlay)
+        Column(
+            modifier = Modifier.clickable(
+                indication = LocalIndication.current,
+                interactionSource = remember { MutableInteractionSource() }
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = selectedAddress.name,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.Black
-                    )
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowDown,
-                        contentDescription = null,
-                        tint = Color.Black,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-
+                onOpenAddressOverlay()
+            }
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = selectedAddress.address,
-                    fontSize = 13.sp,
-                    color = Color.Black.copy(alpha = 0.7f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    text = selectedAddress.name,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.Black
+                )
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = Color.Black,
+                    modifier = Modifier.size(18.dp)
                 )
             }
 
-            // Dropdown appears BELOW name/address
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                user.addresses.forEach { address ->
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text = address.name,
-                                fontWeight = if (address == selectedAddress)
-                                    FontWeight.SemiBold
-                                else FontWeight.Normal
-                            )
-                        },
-                        onClick = {
-                            selectedAddress = address
-                            expanded = false
-                            onAddressSelected(address)
-                        }
-                    )
-                }
-
-                Divider()
-
-                // Add New option
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = "Add New +",
-                            fontWeight = FontWeight.Medium,
-                            color = Color(0xFF007BFF)
-                        )
-                    },
-                    onClick = {
-                        expanded = false
-                        onAddNewClick()
-                    }
-                )
-            }
+            Text(
+                text = selectedAddress.address,
+                fontSize = 13.sp,
+                color = Color.Black.copy(alpha = 0.7f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
+

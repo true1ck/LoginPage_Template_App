@@ -4,14 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -19,17 +14,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.livingai_lg.ui.AuthState
 import com.example.livingai_lg.ui.MainViewModel
 import com.example.livingai_lg.ui.MainViewModelFactory
-import com.example.livingai_lg.ui.login.*
+import com.example.livingai_lg.ui.login_legacy.*
 import com.example.livingai_lg.ui.navigation.AppNavigation
 import com.example.livingai_lg.ui.theme.FarmMarketplaceTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        //enableEdgeToEdge()
         setContent {
             FarmMarketplaceTheme {
                 val mainViewModel: MainViewModel = viewModel(factory = MainViewModelFactory(LocalContext.current))
@@ -54,6 +48,8 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
+// TODO: remove the old code after testing new stuff
 @Composable
 fun AuthNavigation() {
     val navController = rememberNavController()

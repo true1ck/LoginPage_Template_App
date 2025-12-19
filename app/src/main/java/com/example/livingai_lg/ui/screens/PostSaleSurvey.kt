@@ -94,18 +94,6 @@ fun PostSaleSurveyScreen(
                             interactionSource = remember { MutableInteractionSource() }
                         ) { onBackClick() }
                 )
-
-                Text(
-                    text = "Skip",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color(0xFF4A5565),
-                    textDecoration = TextDecoration.Underline,
-                    modifier = Modifier.clickable(
-                        indication = LocalIndication.current,
-                        interactionSource = remember { MutableInteractionSource() }
-                    ) { onSkipClick() }
-                )
             }
 
             Spacer(modifier = Modifier.height(26.dp))

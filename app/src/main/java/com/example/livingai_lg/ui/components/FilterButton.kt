@@ -26,7 +26,7 @@ import com.example.livingai_lg.R
 
 @Composable
 fun FilterButton(
-    onFilterClick: () -> Unit
+    onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -37,7 +37,7 @@ fun FilterButton(
             .clickable(
                 indication = LocalIndication.current,
                 interactionSource = remember { MutableInteractionSource() },
-                onClick = onFilterClick,
+                onClick = onClick,
             ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)

@@ -1,4 +1,4 @@
-package com.example.livingai_lg.ui.login
+package com.example.livingai_lg.ui.login_legacy
 
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -15,7 +15,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight

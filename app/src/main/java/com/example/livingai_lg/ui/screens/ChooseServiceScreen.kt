@@ -27,10 +27,13 @@ import androidx.compose.ui.unit.sp
 import com.example.livingai_lg.ui.components.OptionCard
 import com.example.livingai_lg.ui.components.backgrounds.StoreBackground
 import com.example.livingai_lg.R
+import com.example.livingai_lg.ui.theme.AppTypography
+
 data class ServiceType(
     val id: String,
     val title: String,
-    val icon: Int,
+    val icon: Any,
+    val iconTint: Color,
     val backgroundColor: Color
 )
 
@@ -46,30 +49,35 @@ fun ChooseServiceScreen(
             id = "transport",
             title = "Transport",
             icon = R.drawable.ic_shop,
+            iconTint = Color.White,
             backgroundColor = Color(0xFF9D4EDD)
         ),
         ServiceType(
             id = "vet",
             title = "Vet",
             icon = R.drawable.ic_bag,
+            iconTint = Color.White,
             backgroundColor = Color(0xFF3A86FF)
         ),
         ServiceType(
             id = "feed_supplier",
             title = "Feed Supplier",
             icon = R.drawable.ic_spanner,
+            iconTint = Color.White,
             backgroundColor = Color(0xFFFF5722)
         ),
         ServiceType(
             id = "medicine_supplier",
             title = "Medicine Supplier",
             icon = R.drawable.ic_shop2,
+            iconTint = Color.White,
             backgroundColor = Color(0xFF4CAF50)
         ),
         ServiceType(
             id = "other",
             title = "Other",
             icon = R.drawable.ic_other,
+            iconTint = Color.White,
             backgroundColor = Color(0xFFD4A942)
         )
     )
@@ -101,7 +109,7 @@ fun ChooseServiceScreen(
             ) {
                 Text(
                     text = "Choose Service",
-                    fontSize = 36.sp,
+                    fontSize = AppTypography.Display,
                     fontWeight = FontWeight.Medium,
                     color = Color(0xFF0A0A0A)
                 )
@@ -109,8 +117,8 @@ fun ChooseServiceScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Choose Service**",
-                    fontSize = 16.sp,
+                    text = "Choose a Service",
+                    fontSize = AppTypography.Body,
                     fontWeight = FontWeight.Medium,
                     color = Color(0xFF0A0A0A).copy(alpha = 0.8f)
                 )
@@ -129,6 +137,7 @@ fun ChooseServiceScreen(
                     OptionCard(
                         label = service.title,
                         icon = service.icon,
+                        iconTint = service.iconTint,
                         iconBackgroundColor = service.backgroundColor,
                         onClick = {
                             selectedService.value = service.id
@@ -140,87 +149,6 @@ fun ChooseServiceScreen(
             }
 
             Spacer(modifier = Modifier.height(48.dp))
-        }
-    }
-}
-
-@Composable
-fun ServiceTypeCard(
-    service: ServiceType,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(90.dp)
-            .shadow(2.dp, RoundedCornerShape(16.dp))
-            .background(Color.White, RoundedCornerShape(16.dp))
-            .border(1.dp, Color(0xFFF3F4F6), RoundedCornerShape(16.dp))
-            .clickable(
-                indication = LocalIndication.current,
-                interactionSource = remember { MutableInteractionSource() },
-                onClick = onClick
-            )
-            .padding(12.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Icon container
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .background(service.backgroundColor, RoundedCornerShape(14.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                when (service.id) {
-                    "transport" ->
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_shop),
-                            contentDescription = "Transport",
-                        )
-
-                    "vet" -> Icon(
-                        painter = painterResource(id = R.drawable.ic_bag),
-                        contentDescription = "Vet",
-                    )
-                    "feed_supplier" -> Icon(
-                        painter = painterResource(id = R.drawable.ic_spanner),
-                        contentDescription = "Feed Supplier",
-                    )
-                    "medicine_supplier" -> Icon(
-                        painter = painterResource(id = R.drawable.ic_shop2),
-                        contentDescription = "Medicine Supplier",
-                    )
-                    "other" -> Icon(
-                        painter = painterResource(id = R.drawable.ic_other),
-                        contentDescription = "Other",
-                    )
-                }
-            }
-
-            // Title
-            Text(
-                text = service.title,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Normal,
-                color = Color(0xFF0A0A0A),
-                modifier = Modifier.weight(1f)
-            )
-
-            // Radio button
-            RadioButton(
-                selected = isSelected,
-                onClick = onClick,
-                colors = RadioButtonDefaults.colors(
-                    selectedColor = Color(0xFF6B7280),
-                    unselectedColor = Color(0xFF6B7280)
-                )
-            )
         }
     }
 }

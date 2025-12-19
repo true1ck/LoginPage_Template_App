@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.livingai_lg.ui.components.MediaPickerCard
 import com.example.livingai_lg.ui.models.NewListingFormState
+import com.example.livingai_lg.ui.theme.AppTypography
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,7 +57,7 @@ fun NewListingScreen(
             title = {
                 Text(
                     text = "New Listing",
-                    fontSize = 24.sp,
+                    fontSize = AppTypography.Display,
                     fontWeight = FontWeight.Medium,
                     color = Color(0xFF0A0A0A)
                 )
