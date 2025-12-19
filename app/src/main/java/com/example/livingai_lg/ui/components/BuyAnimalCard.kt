@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.Icon
@@ -153,12 +155,23 @@ fun BuyAnimalCard(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
-                            Text(
-                                product.name ?: "",
-                                fontSize = AppTypography.Body,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Text(
+                            Row {
+                                Text(
+                                    product.breed ?: "",
+                                    fontSize = AppTypography.Body,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Icon(
+                                    imageVector = Icons.Outlined.Info,
+                                    contentDescription = null,
+                                    Modifier.padding(horizontal = 4.dp).size(16.dp).align(Alignment.CenterVertically),
+
+                                )
+
+                                //InfoIconWithOverlay(infoText = product.breedInfo ?: "")
+                            }
+
+                                Text(
                                 formatPrice(product.price),
                                 fontSize = AppTypography.Body,
                                 fontWeight = FontWeight.Medium
