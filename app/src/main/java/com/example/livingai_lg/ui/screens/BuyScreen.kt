@@ -35,6 +35,7 @@ import com.example.livingai_lg.ui.models.userProfile
 import com.example.livingai_lg.R
 import com.example.livingai_lg.ui.components.ActionPopup
 import com.example.livingai_lg.ui.components.AddressSelectorOverlay
+import com.example.livingai_lg.ui.components.FilterOverlay
 import com.example.livingai_lg.ui.components.NotificationsOverlay
 import com.example.livingai_lg.ui.components.SortOverlay
 import com.example.livingai_lg.ui.models.sampleNotifications

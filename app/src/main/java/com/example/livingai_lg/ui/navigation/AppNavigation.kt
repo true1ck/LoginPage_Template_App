@@ -96,7 +96,7 @@ object AppScreen {
 
 object Graph {
     const val AUTH = "auth"
-    const val MAIN = "auth"
+    const val MAIN = "main"
 
     fun auth(route: String)=
         "$AUTH/$route"

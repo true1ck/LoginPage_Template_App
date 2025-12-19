@@ -1,7 +1,9 @@
-package com.example.livingai_lg.ui.screens
+package com.example.livingai_lg.ui.components
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -16,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.example.livingai_lg.ui.screens.FilterScreen
 
 @Composable
 fun FilterOverlay(
@@ -23,29 +26,40 @@ fun FilterOverlay(
     onDismiss: () -> Unit,
     onSubmitClick: () -> Unit = {},
 ) {
-    if (!visible) return
-
-    BackHandler { onDismiss() }
+    BackHandler(enabled = visible) { onDismiss() }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize()
     ) {
         // Dimmed background
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.35f))
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() }
-                ) { onDismiss() }
-        )
         AnimatedVisibility(
             visible = visible,
-            enter = slideInHorizontally { fullWidth -> fullWidth },
-            exit = slideOutHorizontally { fullWidth -> fullWidth },
-            modifier = Modifier.fillMaxHeight()
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.35f))
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) { onDismiss() }
+            )
+        }
+
+        // Sliding panel
+        AnimatedVisibility(
+            visible = visible,
+            enter = slideInHorizontally(
+                initialOffsetX = { it } // from right
+            ),
+            exit = slideOutHorizontally(
+                targetOffsetX = { it } // to right
+            ),
+            modifier = Modifier
+                .fillMaxHeight()
+                .align(Alignment.CenterEnd)
         ) {
             FilterScreen(
                 onBackClick = onDismiss,

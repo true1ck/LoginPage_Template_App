@@ -34,8 +34,13 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.unit.Dp
 import kotlinx.coroutines.launch
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 
 
 @Composable
@@ -79,158 +84,175 @@ fun OtpScreen(
 
         fun s(v: Float) = (v * scale).dp        // dp scaling
         fun fs(v: Float) = (v * scale).sp        // font scaling
-
-        // ---------------------------
-        // "Enter OTP" Title
-        // ---------------------------
-        Text(
-            text = "Enter OTP",
-            color = Color(0xFF927B5E),
-            fontSize = fs(20f),
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.offset(x = s(139f), y = s(279f)),
-            style = LocalTextStyle.current.copy(
-                shadow = Shadow(
-                    color = Color.Black.copy(alpha = 0.25f),
-                    offset = Offset(0f, s(4f).value),
-                    blurRadius = s(4f).value
-                )
+Column(
+    Modifier.fillMaxSize().padding(horizontal = 12.dp),
+    verticalArrangement = Arrangement.Center,
+    horizontalAlignment = Alignment.CenterHorizontally
+) {
+    // ---------------------------
+    // "Enter OTP" Title
+    // ---------------------------
+    Text(
+        text = "Enter OTP",
+        color = Color(0xFF927B5E),
+        fontSize = fs(20f),
+        fontWeight = FontWeight.Medium,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+        textAlign = TextAlign.Center,
+        style = LocalTextStyle.current.copy(
+            shadow = Shadow(
+                color = Color.Black.copy(alpha = 0.25f),
+                offset = Offset(0f, s(4f).value),
+                blurRadius = s(4f).value
             )
         )
+    )
 
-        // ---------------------------
-        // OTP 4-Box Input Row
-        // ---------------------------
-//        Row(
-//            Modifier.offset(x = s(38f), y = s(319f)),
-//            horizontalArrangement = Arrangement.spacedBy(s(17f))
-//        ) {
-//            repeat(4) { index ->
-//                OtpBox(
-//                    index = index,
-//                    otp = otp.value,
-//                    onChange = { if (it.length <= 6) otp.value = it },
-//                    scale = scale
-//                )
-//            }
-//        }
+    // ---------------------------
+    // OTP 4-Box Input Row
+    // ---------------------------
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(s(17f))
+    ) {
         OtpInputRow(
             otpLength = 6,
             scale = scale,
             otp = otp.value,
             onOtpChange = { if (it.length <= 6) otp.value = it }
         )
-        
-        // ---------------------------
-        // Continue Button
-        // ---------------------------
-        Box(
-            modifier = Modifier
-                .offset(x = s(57f), y = s(411f))
-                .size(s(279.25f), s(55.99f))
-                .shadow(
-                    elevation = s(6f),
-                    ambientColor = Color.Black.copy(alpha = 0.10f),
-                    shape = RoundedCornerShape(s(16f)),
-                )
-                .shadow(
-                    elevation = s(15f),
-                    ambientColor = Color.Black.copy(alpha = 0.10f),
-                    shape = RoundedCornerShape(s(16f)),
-                )
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(Color(0xFFFD9900), Color(0xFFE17100))
-                    ),
-                    shape = RoundedCornerShape(s(16f))
-                )
-                .clickable(
-                    indication = LocalIndication.current,
-                    interactionSource = remember { MutableInteractionSource() },
-                    onClick = {
-                        scope.launch {
-                            authManager.login(phoneNumber, otp.value)
-                                .onSuccess { response ->
-                                    if (isSignInFlow) {
-                                        // For existing users, always go to the success screen.
-                                        onSuccess()
+    }
+    // ---------------------------
+    // Continue Button
+    // ---------------------------
+    Box(
+        modifier = Modifier
+            .fillMaxWidth().padding(vertical = 16.dp, horizontal = 48.dp)
+            .size(s(279.25f), s(55.99f))
+            .shadow(
+                elevation = s(6f),
+                ambientColor = Color.Black.copy(alpha = 0.10f),
+                shape = RoundedCornerShape(s(16f)),
+            )
+            .shadow(
+                elevation = s(15f),
+                ambientColor = Color.Black.copy(alpha = 0.10f),
+                shape = RoundedCornerShape(s(16f)),
+            )
+            .background(
+                Brush.horizontalGradient(
+                    listOf(Color(0xFFFD9900), Color(0xFFE17100))
+                ),
+                shape = RoundedCornerShape(s(16f))
+            )
+            .clickable(
+                indication = LocalIndication.current,
+                interactionSource = remember { MutableInteractionSource() },
+                onClick = {
+                    scope.launch {
+                        authManager.login(phoneNumber, otp.value)
+                            .onSuccess { response ->
+                                if (isSignInFlow) {
+                                    // For existing users, always go to the success screen.
+                                    onSuccess()
+                                } else {
+                                    // For new users, check if a profile needs to be created.
+                                    if (response.needsProfile) {
+                                        onCreateProfile(name)
                                     } else {
-                                        // For new users, check if a profile needs to be created.
-                                        if (response.needsProfile) {
-                                            onCreateProfile(name)
-                                        } else {
-                                            onSuccess()
-                                        }
+                                        onSuccess()
                                     }
                                 }
-                                .onFailure {
-                                    Toast.makeText(context, "Invalid or expired OTP", Toast.LENGTH_SHORT).show()
-                                }
-                        }
+                            }
+                            .onFailure {
+                                Toast.makeText(
+                                    context,
+                                    "Invalid or expired OTP",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                     }
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                "Continue",
-                color = Color.White,
-                fontSize = fs(16f),
-                fontWeight = FontWeight.Medium
-            )
-        }
+                }
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            "Continue",
+            color = Color.White,
+            fontSize = fs(16f),
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
     }
 }
 
 @Composable
 fun OtpInputRow(
-    otpLength: Int = 4,
+    otpLength: Int,
     scale: Float,
     otp: String,
     onOtpChange: (String) -> Unit
 ) {
-    val focusRequesters = remember {
-        List(otpLength) { FocusRequester() }
-    }
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        val maxRowWidth = maxWidth
 
-    Row(horizontalArrangement = Arrangement.spacedBy((12 * scale).dp)) {
-        repeat(otpLength) { index ->
-            OtpBox(
-                index = index,
-                otp = otp,
-                scale = scale,
-                focusRequester = focusRequesters[index],
-                onRequestFocus = {
-                    val firstEmpty = otp.length.coerceAtMost(otpLength - 1)
-                    focusRequesters[firstEmpty].requestFocus()
-                },
-                onNextFocus = {
-                    if (index + 1 < otpLength) {
-                        focusRequesters[index + 1].requestFocus()
-                    }
-                },
-                onPrevFocus = {
-                    if (index - 1 >= 0) {
-                        focusRequesters[index - 1].requestFocus()
-                    }
-                },
-                onChange = onOtpChange
-            )
+        val spacing = (12f * scale).dp
+        val totalSpacing = spacing * (otpLength - 1)
+
+        val boxWidth = ((maxRowWidth - totalSpacing) / otpLength)
+            .coerceAtMost((66f * scale).dp)
+
+        val focusRequesters = remember {
+            List(otpLength) { FocusRequester() }
+        }
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(spacing),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            repeat(otpLength) { index ->
+                OtpBox(
+                    index = index,
+                    otp = otp,
+                    scale = scale,
+                    width = boxWidth, // 👈 fixed width
+                    focusRequester = focusRequesters[index],
+                    onRequestFocus = {
+                        val firstEmpty = otp.length.coerceAtMost(otpLength - 1)
+                        focusRequesters[firstEmpty].requestFocus()
+                    },
+                    onNextFocus = {
+                        if (index + 1 < otpLength) focusRequesters[index + 1].requestFocus()
+                    },
+                    onPrevFocus = {
+                        if (index - 1 >= 0) focusRequesters[index - 1].requestFocus()
+                    },
+                    onChange = onOtpChange
+                )
+            }
         }
     }
 }
+
+
+
 
 @Composable
 private fun OtpBox(
     index: Int,
     otp: String,
     scale: Float,
+    width: Dp,
     focusRequester: FocusRequester,
     onRequestFocus: () -> Unit,
     onNextFocus: () -> Unit,
     onPrevFocus: () -> Unit,
     onChange: (String) -> Unit
 ) {
-    val boxW = 66f * scale
     val boxH = 52f * scale
     val radius = 16f * scale
 
@@ -238,7 +260,7 @@ private fun OtpBox(
 
     Box(
         modifier = Modifier
-            .size(boxW.dp, boxH.dp)
+            .size(width, boxH.dp)
             .shadow((4f * scale).dp, RoundedCornerShape(radius.dp))
             .background(Color.White, RoundedCornerShape(radius.dp))
             .clickable { onRequestFocus() },
@@ -250,25 +272,38 @@ private fun OtpBox(
                 when {
                     // DIGIT ENTERED
                     new.matches(Regex("\\d")) -> {
-                        val updated = otp.padEnd(index, ' ').toMutableList()
-                        if (updated.size > index) updated[index] = new.first()
-                        else updated.add(new.first())
+                        val updated = otp.padEnd(index + 1, ' ').toMutableList()
+                        updated[index] = new.first()
                         onChange(updated.joinToString("").trim())
                         onNextFocus()
                     }
 
-                    // BACKSPACE
-                    new.isEmpty() -> {
-                        if (char.isNotEmpty()) {
-                            val updated = otp.toMutableList()
-                            updated.removeAt(index)
-                            onChange(updated.joinToString(""))
-                        } else {
-                            onPrevFocus()
-                        }
+                    // BACKSPACE WHEN CHARACTER EXISTS
+                    new.isEmpty() && char.isNotEmpty() -> {
+                        val updated = otp.toMutableList()
+                        updated.removeAt(index)
+                        onChange(updated.joinToString(""))
                     }
                 }
             },
+            modifier = Modifier
+                .focusRequester(focusRequester)
+                .onPreviewKeyEvent { event ->
+                    if (event.type == KeyEventType.KeyDown &&
+                        event.key == Key.Backspace &&
+                        char.isEmpty() &&
+                        index > 0
+                    ) {
+                        val updated = otp.toMutableList()
+                        updated.removeAt(index - 1)          // 👈 clear previous box
+                        onChange(updated.joinToString(""))
+                        onPrevFocus()
+                        true
+                    }
+                    else {
+                        false
+                    }
+                },
             textStyle = LocalTextStyle.current.copy(
                 fontSize = (24f * scale).sp,
                 fontWeight = FontWeight.Medium,
@@ -277,11 +312,14 @@ private fun OtpBox(
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.NumberPassword
             ),
-            singleLine = true,
-            modifier = Modifier
-                .focusRequester(focusRequester)
-                .align(Alignment.Center)
+            singleLine = true
         )
+
+
+
     }
 }
+
+
+
 
