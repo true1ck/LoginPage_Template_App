@@ -23,7 +23,7 @@ data class DeviceInfo(
 @Serializable
 data class VerifyOtpRequest(
     @SerialName("phone_number") val phoneNumber: String,
-    val code: String,  // Changed from Int to String - backend expects string for bcrypt comparison
+    val code: Int,
     @SerialName("device_id") val deviceId: String,
     @SerialName("device_info") val deviceInfo: DeviceInfo? = null
 )
@@ -87,9 +87,9 @@ data class UpdateProfileRequest(
 data class User(
     val id: String,
     @SerialName("phone_number") val phoneNumber: String,
-    val name: String? = null,
-    val role: String? = null,  // Made nullable - backend can return null for new users
-    @SerialName("user_type") val userType: String? = null,  // Made nullable with default - backend may not return this
+    val name: String?,
+    val role: String,
+    @SerialName("user_type") val userType: String?,
     @SerialName("created_at") val createdAt: String? = null,
     @SerialName("country_code") val countryCode: String? = null
 )

@@ -167,8 +167,8 @@ fun SignUpScreen(
                 // Sign Up button
                 Button(
                     onClick = {
-                        val fullPhoneNumber = "+91${formData.phoneNumber}"
                         scope.launch {
+                            val fullPhoneNumber = "+91${formData.phoneNumber}"
                             // Request OTP first before allowing signup
                             authManager.requestOtp(fullPhoneNumber)
                                 .onSuccess {
@@ -177,7 +177,7 @@ fun SignUpScreen(
                                     onSignUpClick(fullPhoneNumber, formData.name, formData.state, formData.district, formData.village)
                                 }
                                 .onFailure {
-                                    Toast.makeText(context, "Failed to send OTP: ${it.message}", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, "Signup failed: ${it.message}", Toast.LENGTH_LONG).show()
                                 }
                         }
                     },

@@ -30,8 +30,6 @@ class AuthApiClient(private val context: Context) {
                 prettyPrint = true
                 isLenient = true
                 ignoreUnknownKeys = true
-                coerceInputValues = true  // Coerce missing fields to default values
-                encodeDefaults = false
             })
         }
 
@@ -78,23 +76,9 @@ class AuthApiClient(private val context: Context) {
     }
 
     suspend fun verifyOtp(phoneNumber: String, code: String, deviceId: String): Result<VerifyOtpResponse> = runCatching {
-        // Trim and validate code (ensure no whitespace, exactly 6 digits)
-        val trimmedCode = code.trim()
-        
-        // Debug: Log the request details
-        android.util.Log.d("AuthApiClient", "Verify OTP Request:")
-        android.util.Log.d("AuthApiClient", "  phone_number: $phoneNumber")
-        android.util.Log.d("AuthApiClient", "  code (original): '$code' (length: ${code.length})")
-        android.util.Log.d("AuthApiClient", "  code (trimmed): '$trimmedCode' (length: ${trimmedCode.length})")
-        android.util.Log.d("AuthApiClient", "  device_id: $deviceId")
-        
-        // Create request object with trimmed code
-        val request = VerifyOtpRequest(phoneNumber, trimmedCode, deviceId, getDeviceInfo())
-        
         val response: VerifyOtpResponse = client.post("auth/verify-otp") {
             contentType(ContentType.Application.Json)
-            // Send code as string - backend validation requires string type and bcrypt.compare needs string
-            setBody(request)
+            setBody(VerifyOtpRequest(phoneNumber, code.toInt(), deviceId, getDeviceInfo()))
         }.body()
 
         tokenManager.saveTokens(response.accessToken, response.refreshToken)
@@ -107,18 +91,12 @@ class AuthApiClient(private val context: Context) {
             setBody(request.copy(deviceId = getDeviceId(), deviceInfo = getDeviceInfo()))
         }
 
-        // Handle both success and error responses
+        // Instead of throwing an exception on non-2xx, we return a result type
+        // that can be handled by the caller.
         if (response.status.isSuccess()) {
             response.body<SignupResponse>()
         } else {
-            // Try to parse error response as SignupResponse (for 409 conflicts with user_exists flag)
-            try {
-                response.body<SignupResponse>()
-            } catch (e: Exception) {
-                // If parsing fails, throw an exception with the status and message
-                val errorBody = response.bodyAsText()
-                throw Exception("Signup failed: ${response.status} - $errorBody")
-            }
+            response.body<SignupResponse>()
         }
     }
 
