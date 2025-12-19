@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.livingai_lg.api.AuthApiClient
 import com.example.livingai_lg.api.AuthManager
+import com.example.livingai_lg.api.SignupRequest
 import com.example.livingai_lg.api.TokenManager
 import com.example.livingai_lg.ui.components.backgrounds.DecorativeBackground
 import kotlin.math.min
@@ -49,6 +50,10 @@ fun OtpScreen(
     name: String,
     onSuccess: () -> Unit = {},
     onCreateProfile: (name: String) -> Unit = {},
+    // Optional signup data for signup flow
+    signupState: String? = null,
+    signupDistrict: String? = null,
+    signupVillage: String? = null,
 ) {
     val otp = remember { mutableStateOf("") }
     val context = LocalContext.current.applicationContext
@@ -57,6 +62,8 @@ fun OtpScreen(
 
     // Flag to determine if this is a sign-in flow for an existing user.
     val isSignInFlow = name == "existing_user"
+    // Flag to determine if this is a signup flow (has signup data)
+    val isSignupFlow = !isSignInFlow && (signupState != null || signupDistrict != null || signupVillage != null)
 
     BoxWithConstraints(
         modifier = Modifier
@@ -150,27 +157,131 @@ Column(
                 interactionSource = remember { MutableInteractionSource() },
                 onClick = {
                     scope.launch {
-                        authManager.login(phoneNumber, otp.value)
-                            .onSuccess { response ->
-                                if (isSignInFlow) {
-                                    // For existing users, always go to the success screen.
-                                    onSuccess()
-                                } else {
-                                    // For new users, check if a profile needs to be created.
-                                    if (response.needsProfile) {
-                                        onCreateProfile(name)
-                                    } else {
-                                        onSuccess()
+                        if (isSignupFlow) {
+                            // For signup flow: Verify OTP first, then call signup API to update user with name/location
+                            android.util.Log.d("OTPScreen", "Signup flow: Verifying OTP...")
+                            authManager.login(phoneNumber, otp.value)
+                                .onSuccess { verifyResponse ->
+                                    android.util.Log.d("OTPScreen", "OTP verified successfully. Calling signup API...")
+                                    // OTP verified successfully - user is now logged in
+                                    // Now call signup API to update user with name and location
+                                    val signupRequest = SignupRequest(
+                                        name = name,
+                                        phoneNumber = phoneNumber,
+                                        state = signupState,
+                                        district = signupDistrict,
+                                        cityVillage = signupVillage
+                                    )
+                                    authManager.signup(signupRequest)
+                                        .onSuccess { signupResponse ->
+                                            android.util.Log.d("OTPScreen", "Signup API response: success=${signupResponse.success}, userExists=${signupResponse.userExists}, needsProfile=${signupResponse.needsProfile}")
+                                            // Signup API response - check if successful or user exists
+                                            if (signupResponse.success || signupResponse.userExists == true) {
+                                                // Success - user is created/updated and logged in
+                                                // Check if profile needs completion
+                                                val needsProfile = signupResponse.needsProfile == true || verifyResponse.needsProfile
+                                                android.util.Log.d("OTPScreen", "Signup successful. needsProfile=$needsProfile, navigating...")
+                                                try {
+                                                    if (needsProfile) {
+                                                        android.util.Log.d("OTPScreen", "Navigating to create profile screen with name: $name")
+                                                        onCreateProfile(name)
+                                                    } else {
+                                                        android.util.Log.d("OTPScreen", "Navigating to success screen")
+                                                        onSuccess()
+                                                    }
+                                                } catch (e: Exception) {
+                                                    android.util.Log.e("OTPScreen", "Navigation error: ${e.message}", e)
+                                                    Toast.makeText(context, "Navigation error: ${e.message}", Toast.LENGTH_LONG).show()
+                                                }
+                                            } else {
+                                                // Signup failed but OTP was verified - user is logged in
+                                                // Navigate to success anyway since verify-otp succeeded
+                                                android.util.Log.d("OTPScreen", "Signup API returned false, but OTP verified. Navigating anyway...")
+                                                val needsProfile = verifyResponse.needsProfile
+                                                try {
+                                                    if (needsProfile) {
+                                                        android.util.Log.d("OTPScreen", "Navigating to create profile screen with name: $name")
+                                                        onCreateProfile(name)
+                                                    } else {
+                                                        android.util.Log.d("OTPScreen", "Navigating to success screen")
+                                                        onSuccess()
+                                                    }
+                                                } catch (e: Exception) {
+                                                    android.util.Log.e("OTPScreen", "Navigation error: ${e.message}", e)
+                                                    Toast.makeText(context, "Navigation error: ${e.message}", Toast.LENGTH_LONG).show()
+                                                }
+                                                // Show warning if signup update failed
+                                                val errorMsg = signupResponse.message
+                                                if (errorMsg != null) {
+                                                    Toast.makeText(context, "Profile update: $errorMsg", Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
+                                        }
+                                        .onFailure { signupError ->
+                                            android.util.Log.e("OTPScreen", "Signup API failed: ${signupError.message}", signupError)
+                                            // Signup API failed but OTP was verified - user is logged in
+                                            // Navigate to success anyway since verify-otp succeeded
+                                            val needsProfile = verifyResponse.needsProfile
+                                            android.util.Log.d("OTPScreen", "Navigating despite signup failure. needsProfile=$needsProfile")
+                                            try {
+                                                if (needsProfile) {
+                                                    android.util.Log.d("OTPScreen", "Navigating to create profile screen with name: $name")
+                                                    onCreateProfile(name)
+                                                } else {
+                                                    android.util.Log.d("OTPScreen", "Navigating to success screen")
+                                                    onSuccess()
+                                                }
+                                            } catch (e: Exception) {
+                                                android.util.Log.e("OTPScreen", "Navigation error: ${e.message}", e)
+                                                Toast.makeText(context, "Navigation error: ${e.message}", Toast.LENGTH_LONG).show()
+                                            }
+                                            // Show warning about signup failure
+                                            val errorMsg = signupError.message ?: "Profile update failed"
+                                            Toast.makeText(context, "Warning: $errorMsg", Toast.LENGTH_SHORT).show()
+                                        }
+                                }
+                                .onFailure { error ->
+                                    android.util.Log.e("OTPScreen", "OTP verification failed: ${error.message}", error)
+                                    Toast.makeText(
+                                        context,
+                                        "Invalid or expired OTP",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                        } else {
+                            // For sign-in flow: Just verify OTP and login
+                            authManager.login(phoneNumber, otp.value)
+                                .onSuccess { response ->
+                                    android.util.Log.d("OTPScreen", "Sign-in OTP verified. needsProfile=${response.needsProfile}")
+                                    try {
+                                        if (isSignInFlow) {
+                                            // For existing users, always go to the success screen.
+                                            android.util.Log.d("OTPScreen", "Existing user - navigating to success")
+                                            onSuccess()
+                                        } else {
+                                            // For new users, check if a profile needs to be created.
+                                            if (response.needsProfile) {
+                                                android.util.Log.d("OTPScreen", "New user needs profile - navigating to create profile with name: $name")
+                                                onCreateProfile(name)
+                                            } else {
+                                                android.util.Log.d("OTPScreen", "New user - navigating to success")
+                                                onSuccess()
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        android.util.Log.e("OTPScreen", "Navigation error: ${e.message}", e)
+                                        Toast.makeText(context, "Navigation error: ${e.message}", Toast.LENGTH_LONG).show()
                                     }
                                 }
-                            }
-                            .onFailure {
-                                Toast.makeText(
-                                    context,
-                                    "Invalid or expired OTP",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
+                                .onFailure { error ->
+                                    android.util.Log.e("OTPScreen", "OTP verification failed: ${error.message}", error)
+                                    Toast.makeText(
+                                        context,
+                                        "Invalid or expired OTP",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                        }
                     }
                 }
             ),

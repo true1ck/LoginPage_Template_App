@@ -2,6 +2,7 @@ package com.example.livingai_lg.api
 
 import android.content.Context
 import android.os.Build
+import android.provider.Settings
 import com.example.livingai_lg.BuildConfig
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -11,6 +12,7 @@ import io.ktor.client.plugins.auth.*
 import io.ktor.client.plugins.auth.providers.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
@@ -28,6 +30,8 @@ class AuthApiClient(private val context: Context) {
                 prettyPrint = true
                 isLenient = true
                 ignoreUnknownKeys = true
+                coerceInputValues = true  // Coerce missing fields to default values
+                encodeDefaults = false
             })
         }
 
@@ -74,13 +78,48 @@ class AuthApiClient(private val context: Context) {
     }
 
     suspend fun verifyOtp(phoneNumber: String, code: String, deviceId: String): Result<VerifyOtpResponse> = runCatching {
+        // Trim and validate code (ensure no whitespace, exactly 6 digits)
+        val trimmedCode = code.trim()
+        
+        // Debug: Log the request details
+        android.util.Log.d("AuthApiClient", "Verify OTP Request:")
+        android.util.Log.d("AuthApiClient", "  phone_number: $phoneNumber")
+        android.util.Log.d("AuthApiClient", "  code (original): '$code' (length: ${code.length})")
+        android.util.Log.d("AuthApiClient", "  code (trimmed): '$trimmedCode' (length: ${trimmedCode.length})")
+        android.util.Log.d("AuthApiClient", "  device_id: $deviceId")
+        
+        // Create request object with trimmed code
+        val request = VerifyOtpRequest(phoneNumber, trimmedCode, deviceId, getDeviceInfo())
+        
         val response: VerifyOtpResponse = client.post("auth/verify-otp") {
             contentType(ContentType.Application.Json)
-            setBody(VerifyOtpRequest(phoneNumber, code, deviceId, getDeviceInfo()))
+            // Send code as string - backend validation requires string type and bcrypt.compare needs string
+            setBody(request)
         }.body()
 
         tokenManager.saveTokens(response.accessToken, response.refreshToken)
         response
+    }
+
+    suspend fun signup(request: SignupRequest): Result<SignupResponse> = runCatching {
+        val response = client.post("auth/signup") {
+            contentType(ContentType.Application.Json)
+            setBody(request.copy(deviceId = getDeviceId(), deviceInfo = getDeviceInfo()))
+        }
+
+        // Handle both success and error responses
+        if (response.status.isSuccess()) {
+            response.body<SignupResponse>()
+        } else {
+            // Try to parse error response as SignupResponse (for 409 conflicts with user_exists flag)
+            try {
+                response.body<SignupResponse>()
+            } catch (e: Exception) {
+                // If parsing fails, throw an exception with the status and message
+                val errorBody = response.bodyAsText()
+                throw Exception("Signup failed: ${response.status} - $errorBody")
+            }
+        }
     }
 
     suspend fun updateProfile(name: String, userType: String): Result<User> = runCatching {
@@ -114,5 +153,9 @@ class AuthApiClient(private val context: Context) {
             languageCode = Locale.getDefault().toString(),
             timezone = TimeZone.getDefault().id
         )
+    }
+
+    private fun getDeviceId(): String {
+        return Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
     }
 }

@@ -10,6 +10,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import com.example.livingai_lg.ui.screens.SaleArchiveScreen
 import com.example.livingai_lg.ui.screens.auth.LandingScreen
 import com.example.livingai_lg.ui.screens.auth.OtpScreen
@@ -42,8 +46,8 @@ fun NavGraphBuilder.authNavGraph(navController: NavController) {
 
         composable(AppScreen.SIGN_UP) {
             SignUpScreen(
-                onSignUpClick = { phone, name ->
-                    navController.navigate(AppScreen.otp(phone,name))
+                onSignUpClick = { phone, name, state, district, village ->
+                    navController.navigate(AppScreen.otpWithSignup(phone, name, state, district, village))
                 },
                 onSignInClick = {
                     navController.navigate(AppScreen.SIGN_IN) {
@@ -63,8 +67,125 @@ fun NavGraphBuilder.authNavGraph(navController: NavController) {
             OtpScreen(
                 phoneNumber = backStackEntry.arguments?.getString("phoneNumber") ?: "",
                 name = backStackEntry.arguments?.getString("name") ?: "",
-                onCreateProfile = {name -> navController.navigate(Graph.main(AppScreen.createProfile(name)))},
-                onSuccess = { navController.navigate(Graph.auth(AppScreen.chooseService("1")))}
+                onCreateProfile = {name -> 
+                    android.util.Log.d("AuthNavGraph", "Navigating to create profile with name: $name")
+                    // Navigate to main graph first without popping, then navigate to specific route
+                    try {
+                        // Navigate to main graph (this will use its start destination)
+                        navController.navigate(Graph.MAIN) {
+                            // Don't pop the AUTH graph yet - keep the graph structure
+                            launchSingleTop = true
+                        }
+                        // Then navigate to the specific route after a short delay
+                        CoroutineScope(Dispatchers.Main).launch {
+                            delay(200)
+                            try {
+                                navController.navigate(AppScreen.createProfile(name)) {
+                                    // Now pop the AUTH graph after we're in the MAIN graph
+                                    popUpTo(Graph.AUTH) { inclusive = true }
+                                }
+                            } catch (e: Exception) {
+                                android.util.Log.e("AuthNavGraph", "Secondary navigation error: ${e.message}", e)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("AuthNavGraph", "Navigation error: ${e.message}", e)
+                    }
+                },
+                onSuccess = { 
+                    android.util.Log.d("AuthNavGraph", "Navigating to choose service")
+                    // Navigate to main graph first without popping, then navigate to specific route
+                    try {
+                        // Navigate to main graph (this will use its start destination)
+                        navController.navigate(Graph.MAIN) {
+                            // Don't pop the AUTH graph yet - keep the graph structure
+                            launchSingleTop = true
+                        }
+                        // Then navigate to the specific route after a short delay
+                        CoroutineScope(Dispatchers.Main).launch {
+                            delay(200)
+                            try {
+                                navController.navigate(AppScreen.chooseService("1")) {
+                                    // Now pop the AUTH graph after we're in the MAIN graph
+                                    popUpTo(Graph.AUTH) { inclusive = true }
+                                }
+                            } catch (e: Exception) {
+                                android.util.Log.e("AuthNavGraph", "Secondary navigation error: ${e.message}", e)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("AuthNavGraph", "Navigation error: ${e.message}", e)
+                    }
+                }
+            )
+        }
+
+        composable(
+            "${AppScreen.OTP}/{phoneNumber}/{name}/{state}/{district}/{village}",
+            arguments = listOf(
+                navArgument("phoneNumber") { type = NavType.StringType },
+                navArgument("name") { type = NavType.StringType },
+                navArgument("state") { type = NavType.StringType },
+                navArgument("district") { type = NavType.StringType },
+                navArgument("village") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            OtpScreen(
+                phoneNumber = backStackEntry.arguments?.getString("phoneNumber") ?: "",
+                name = backStackEntry.arguments?.getString("name") ?: "",
+                signupState = backStackEntry.arguments?.getString("state"),
+                signupDistrict = backStackEntry.arguments?.getString("district"),
+                signupVillage = backStackEntry.arguments?.getString("village"),
+                onCreateProfile = {name -> 
+                    android.util.Log.d("AuthNavGraph", "Navigating to create profile with name: $name")
+                    // Navigate to main graph first without popping, then navigate to specific route
+                    try {
+                        // Navigate to main graph (this will use its start destination)
+                        navController.navigate(Graph.MAIN) {
+                            // Don't pop the AUTH graph yet - keep the graph structure
+                            launchSingleTop = true
+                        }
+                        // Then navigate to the specific route after a short delay
+                        CoroutineScope(Dispatchers.Main).launch {
+                            delay(200)
+                            try {
+                                navController.navigate(AppScreen.createProfile(name)) {
+                                    // Now pop the AUTH graph after we're in the MAIN graph
+                                    popUpTo(Graph.AUTH) { inclusive = true }
+                                }
+                            } catch (e: Exception) {
+                                android.util.Log.e("AuthNavGraph", "Secondary navigation error: ${e.message}", e)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("AuthNavGraph", "Navigation error: ${e.message}", e)
+                    }
+                },
+                onSuccess = { 
+                    android.util.Log.d("AuthNavGraph", "Navigating to choose service")
+                    // Navigate to main graph first without popping, then navigate to specific route
+                    try {
+                        // Navigate to main graph (this will use its start destination)
+                        navController.navigate(Graph.MAIN) {
+                            // Don't pop the AUTH graph yet - keep the graph structure
+                            launchSingleTop = true
+                        }
+                        // Then navigate to the specific route after a short delay
+                        CoroutineScope(Dispatchers.Main).launch {
+                            delay(200)
+                            try {
+                                navController.navigate(AppScreen.chooseService("1")) {
+                                    // Now pop the AUTH graph after we're in the MAIN graph
+                                    popUpTo(Graph.AUTH) { inclusive = true }
+                                }
+                            } catch (e: Exception) {
+                                android.util.Log.e("AuthNavGraph", "Secondary navigation error: ${e.message}", e)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("AuthNavGraph", "Navigation error: ${e.message}", e)
+                    }
+                }
             )
         }
     }

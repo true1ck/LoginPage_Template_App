@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.livingai_lg.api.AuthApiClient
 import com.example.livingai_lg.api.AuthManager
+import com.example.livingai_lg.api.SignupRequest
 import com.example.livingai_lg.api.TokenManager
 import com.example.livingai_lg.ui.components.backgrounds.DecorativeBackground
 import com.example.livingai_lg.ui.components.DropdownInput
@@ -52,7 +53,7 @@ private fun String.isValidPhoneNumber(): Boolean {
 @Composable
 fun SignUpScreen(
     onSignInClick: () -> Unit = {},
-    onSignUpClick: (phone: String, name: String) -> Unit = {_,_->}
+    onSignUpClick: (phone: String, name: String, state: String, district: String, village: String) -> Unit = {_,_,_,_,_->}
 ) {
     var formData by remember { mutableStateOf(SignUpFormData()) }
 
@@ -168,9 +169,12 @@ fun SignUpScreen(
                     onClick = {
                         val fullPhoneNumber = "+91${formData.phoneNumber}"
                         scope.launch {
+                            // Request OTP first before allowing signup
                             authManager.requestOtp(fullPhoneNumber)
                                 .onSuccess {
-                                    onSignUpClick(fullPhoneNumber,formData.name)
+                                    // OTP sent successfully, navigate to OTP screen with signup data
+                                    // Pass signup form data through the callback
+                                    onSignUpClick(fullPhoneNumber, formData.name, formData.state, formData.district, formData.village)
                                 }
                                 .onFailure {
                                     Toast.makeText(context, "Failed to send OTP: ${it.message}", Toast.LENGTH_LONG).show()

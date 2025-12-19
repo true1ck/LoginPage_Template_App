@@ -16,7 +16,22 @@ class AuthManager(
         val deviceId = getDeviceId()
         return apiClient.verifyOtp(phoneNumber, code, deviceId)
             .onSuccess { response ->
-                tokenManager.saveTokens(response.accessToken, response.refreshToken)
+                response.accessToken?.let { accessToken ->
+                    response.refreshToken?.let { refreshToken ->
+                        tokenManager.saveTokens(accessToken, refreshToken)
+                    }
+                }
+            }
+    }
+
+    suspend fun signup(signupRequest: SignupRequest): Result<SignupResponse> {
+        return apiClient.signup(signupRequest)
+            .onSuccess { response ->
+                response.accessToken?.let { accessToken ->
+                    response.refreshToken?.let { refreshToken ->
+                        tokenManager.saveTokens(accessToken, refreshToken)
+                    }
+                }
             }
     }
 

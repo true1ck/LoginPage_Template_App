@@ -23,7 +23,7 @@ data class DeviceInfo(
 @Serializable
 data class VerifyOtpRequest(
     @SerialName("phone_number") val phoneNumber: String,
-    val code: String,
+    val code: String,  // Changed from Int to String - backend expects string for bcrypt comparison
     @SerialName("device_id") val deviceId: String,
     @SerialName("device_info") val deviceInfo: DeviceInfo? = null
 )
@@ -34,6 +34,34 @@ data class VerifyOtpResponse(
     @SerialName("access_token") val accessToken: String,
     @SerialName("refresh_token") val refreshToken: String,
     @SerialName("needs_profile") val needsProfile: Boolean
+)
+// endregion
+
+// region: Signup
+@Serializable
+data class SignupRequest(
+    val name: String,
+    @SerialName("phone_number") val phoneNumber: String,
+    val state: String? = null,
+    val district: String? = null,
+    @SerialName("city_village") val cityVillage: String? = null,
+    @SerialName("device_id") val deviceId: String? = null,
+    @SerialName("device_info") val deviceInfo: DeviceInfo? = null
+)
+
+@Serializable
+data class SignupResponse(
+    val success: Boolean,
+    val user: User? = null,
+    @SerialName("access_token") val accessToken: String? = null,
+    @SerialName("refresh_token") val refreshToken: String? = null,
+    @SerialName("needs_profile") val needsProfile: Boolean? = null,
+    @SerialName("is_new_account") val isNewAccount: Boolean? = null,
+    @SerialName("is_new_device") val isNewDevice: Boolean? = null,
+    @SerialName("active_devices_count") val activeDevicesCount: Int? = null,
+    @SerialName("location_id") val locationId: String? = null,
+    val message: String? = null,
+    @SerialName("user_exists") val userExists: Boolean? = null
 )
 // endregion
 
@@ -59,9 +87,11 @@ data class UpdateProfileRequest(
 data class User(
     val id: String,
     @SerialName("phone_number") val phoneNumber: String,
-    val name: String?,
-    val role: String,
-    @SerialName("user_type") val userType: String?
+    val name: String? = null,
+    val role: String? = null,  // Made nullable - backend can return null for new users
+    @SerialName("user_type") val userType: String? = null,  // Made nullable with default - backend may not return this
+    @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("country_code") val countryCode: String? = null
 )
 
 @Serializable

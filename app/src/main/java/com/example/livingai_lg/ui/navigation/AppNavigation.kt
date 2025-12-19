@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -74,6 +75,9 @@ object AppScreen {
 
     fun otp(phone: String, name: String) =
         "$OTP/$phone/$name"
+    
+    fun otpWithSignup(phone: String, name: String, state: String, district: String, village: String) =
+        "$OTP/$phone/$name/$state/$district/$village"
 
     fun createProfile(name: String) =
         "$CREATE_PROFILE/$name"
@@ -109,24 +113,29 @@ fun AppNavigation(
     authState: AuthState
 ) {
     val navController = rememberNavController()
-    var isLoggedIn = false;
-
-    when (authState) {
-        is AuthState.Unauthenticated -> {isLoggedIn = false; }
-        is AuthState.Authenticated -> {isLoggedIn = true;}
-        is AuthState.Unknown -> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        }
-    }
-
+    
+    // Always start with AUTH (landing screen) - this ensures LandingScreen opens first
+    // We'll navigate to MAIN only if user is authenticated (handled by LaunchedEffect)
     NavHost(
         navController = navController,
-        startDestination = if (isLoggedIn) Graph.MAIN else Graph.AUTH
+        startDestination = Graph.AUTH
     ) {
         authNavGraph(navController)
         mainNavGraph(navController)
+    }
+
+    // Navigate to MAIN graph if user is authenticated
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Authenticated) {
+            val currentRoute = navController.currentBackStackEntry?.destination?.route
+            // Only navigate if we're not already in the MAIN graph
+            if (currentRoute?.startsWith(Graph.MAIN) != true) {
+                navController.navigate(Graph.MAIN) {
+                    // Clear back stack to prevent going back to auth screens
+                    popUpTo(Graph.AUTH) { inclusive = true }
+                }
+            }
+        }
     }
 //    MainNavGraph(navController)
 //    AuthNavGraph(navController)

@@ -44,7 +44,7 @@ fun NavGraphBuilder.mainNavGraph(navController: NavController) {
 
     navigation(
         route = Graph.MAIN,
-        startDestination = AppScreen.createProfile("guest")
+        startDestination = AppScreen.BUY_ANIMALS
     ){
 
 
