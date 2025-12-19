@@ -45,25 +45,40 @@ class AuthApiClient(private val context: Context) {
                 loadTokens {
                     val accessToken = tokenManager.getAccessToken()
                     val refreshToken = tokenManager.getRefreshToken()
+                    android.util.Log.d("AuthApiClient", "loadTokens: accessToken=${accessToken != null}, refreshToken=${refreshToken != null}")
                     if (accessToken != null && refreshToken != null) {
+                        android.util.Log.d("AuthApiClient", "loadTokens: Returning BearerTokens")
                         BearerTokens(accessToken, refreshToken)
                     } else {
+                        android.util.Log.d("AuthApiClient", "loadTokens: No tokens available, returning null")
                         null
                     }
                 }
 
                 refreshTokens {
-                    val refreshToken = tokenManager.getRefreshToken() ?: return@refreshTokens null
+                    android.util.Log.d("AuthApiClient", "refreshTokens: Starting token refresh")
+                    val refreshToken = tokenManager.getRefreshToken() ?: run {
+                        android.util.Log.e("AuthApiClient", "refreshTokens: No refresh token found!")
+                        return@refreshTokens null
+                    }
+                    
+                    android.util.Log.d("AuthApiClient", "refreshTokens: Calling /auth/refresh endpoint")
+                    try {
+                        val response: RefreshResponse = client.post("http://10.0.2.2:3000/auth/refresh") {
+                            markAsRefreshTokenRequest()
+                            contentType(ContentType.Application.Json)
+                            setBody(RefreshRequest(refreshToken))
+                        }.body()
 
-                    val response: RefreshResponse = client.post("http://10.0.2.2:3000/auth/refresh") {
-                        markAsRefreshTokenRequest()
-                        contentType(ContentType.Application.Json)
-                        setBody(RefreshRequest(refreshToken))
-                    }.body()
+                        android.util.Log.d("AuthApiClient", "refreshTokens: Refresh successful, saving new tokens")
+                        tokenManager.saveTokens(response.accessToken, response.refreshToken)
+                        android.util.Log.d("AuthApiClient", "refreshTokens: New tokens saved successfully")
 
-                    tokenManager.saveTokens(response.accessToken, response.refreshToken)
-
-                    BearerTokens(response.accessToken, response.refreshToken)
+                        BearerTokens(response.accessToken, response.refreshToken)
+                    } catch (e: Exception) {
+                        android.util.Log.e("AuthApiClient", "refreshTokens: Refresh failed: ${e.message}", e)
+                        throw e
+                    }
                 }
             }
         }
@@ -155,21 +170,40 @@ class AuthApiClient(private val context: Context) {
     }
 
     suspend fun getUserDetails(): Result<UserDetails> = runCatching {
-        client.get("users/me").body()
+        android.util.Log.d("AuthApiClient", "getUserDetails: Calling /users/me endpoint")
+        try {
+            val response = client.get("users/me")
+            android.util.Log.d("AuthApiClient", "getUserDetails: Response status=${response.status}")
+            val userDetails = response.body<UserDetails>()
+            android.util.Log.d("AuthApiClient", "getUserDetails: Success - user id=${userDetails.id}")
+            userDetails
+        } catch (e: Exception) {
+            android.util.Log.e("AuthApiClient", "getUserDetails: Error - ${e.message}", e)
+            throw e
+        }
     }
 
     suspend fun refreshToken(): Result<RefreshResponse> = runCatching {
+        android.util.Log.d("AuthApiClient", "refreshToken: Starting manual token refresh")
         val refreshToken = tokenManager.getRefreshToken() 
             ?: throw IllegalStateException("No refresh token found")
         
-        val response: RefreshResponse = client.post("auth/refresh") {
-            contentType(ContentType.Application.Json)
-            setBody(RefreshRequest(refreshToken))
-        }.body()
+        android.util.Log.d("AuthApiClient", "refreshToken: Calling /auth/refresh endpoint")
+        try {
+            val response: RefreshResponse = client.post("auth/refresh") {
+                contentType(ContentType.Application.Json)
+                setBody(RefreshRequest(refreshToken))
+            }.body()
 
-        // Save the new tokens (refresh token rotates)
-        tokenManager.saveTokens(response.accessToken, response.refreshToken)
-        response
+            android.util.Log.d("AuthApiClient", "refreshToken: Refresh successful, saving new tokens")
+            // Save the new tokens (refresh token rotates)
+            tokenManager.saveTokens(response.accessToken, response.refreshToken)
+            android.util.Log.d("AuthApiClient", "refreshToken: New tokens saved successfully")
+            response
+        } catch (e: Exception) {
+            android.util.Log.e("AuthApiClient", "refreshToken: Refresh failed: ${e.message}", e)
+            throw e
+        }
     }
 
     suspend fun logout(): Result<LogoutResponse> = runCatching {

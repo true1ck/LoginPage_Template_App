@@ -38,12 +38,22 @@ class MainViewModel(context: Context) : ViewModel() {
 
     init {
         // Immediately check if tokens exist (synchronous check)
-        val hasTokens = tokenManager.getAccessToken() != null && tokenManager.getRefreshToken() != null
+        val accessToken = tokenManager.getAccessToken()
+        val refreshToken = tokenManager.getRefreshToken()
+        val hasTokens = accessToken != null && refreshToken != null
+        
+        Log.d(TAG, "MainViewModel.init: accessToken=${accessToken != null}, refreshToken=${refreshToken != null}, hasTokens=$hasTokens")
+        
         if (hasTokens) {
-            // Tokens exist, validate them asynchronously
+            // Tokens exist - optimistically set to Authenticated for immediate navigation
+            // Then validate in background (this prevents redirect to landing page on app restart)
+            Log.d(TAG, "MainViewModel.init: Tokens found, setting authState to Authenticated (optimistic)")
+            _authState.value = AuthState.Authenticated
+            // Validate tokens in background (this will only revert if there's a clear auth failure)
             checkAuthStatus()
         } else {
             // No tokens, immediately set to unauthenticated
+            Log.d(TAG, "MainViewModel.init: No tokens found, setting authState to Unauthenticated")
             _authState.value = AuthState.Unauthenticated
         }
     }
@@ -86,15 +96,17 @@ class MainViewModel(context: Context) : ViewModel() {
      */
     private fun validateTokensOptimistic() {
         viewModelScope.launch {
+            Log.d(TAG, "validateTokensOptimistic: Starting token validation")
             // Try to fetch user details first - Ktor's Auth plugin will auto-refresh if access token is expired
             authApiClient.getUserDetails()
                 .onSuccess { userDetails ->
                     // Tokens are valid, user is authenticated
-                    Log.d(TAG, "Token validation successful - user authenticated")
+                    Log.d(TAG, "validateTokensOptimistic: Token validation successful - user authenticated, userId=${userDetails.id}")
                     _authState.value = AuthState.Authenticated
                     _userState.value = UserState.Success(userDetails)
                 }
                 .onFailure { error ->
+                    Log.w(TAG, "validateTokensOptimistic: getUserDetails failed - ${error.message}")
                     // Check if this is a network error or authentication error
                     val isNetworkError = error.message?.contains("Unable to resolve host", ignoreCase = true) == true
                             || error.message?.contains("timeout", ignoreCase = true) == true
@@ -104,12 +116,15 @@ class MainViewModel(context: Context) : ViewModel() {
                             || error.message?.contains("ConnectException", ignoreCase = true) == true
                             || error.message?.contains("UnknownHostException", ignoreCase = true) == true
                     
+                    Log.d(TAG, "validateTokensOptimistic: isNetworkError=$isNetworkError")
+                    
                     if (isNetworkError) {
                         // Network error - keep optimistic authentication state
                         // User might be offline, tokens are still valid
-                        Log.w(TAG, "Network error during token validation (keeping optimistic auth): ${error.message}")
+                        Log.w(TAG, "validateTokensOptimistic: Network error detected (keeping optimistic auth): ${error.message}")
                         _userState.value = UserState.Error("Network error. Please check your connection.")
                         // Keep authState as Authenticated - don't revert on network errors
+                        Log.d(TAG, "validateTokensOptimistic: Keeping authState as Authenticated despite network error")
                         return@launch
                     }
                     
@@ -190,12 +205,16 @@ class MainViewModel(context: Context) : ViewModel() {
             val accessToken = tokenManager.getAccessToken()
             val refreshToken = tokenManager.getRefreshToken()
             
+            Log.d(TAG, "checkAuthStatus: accessToken=${accessToken != null}, refreshToken=${refreshToken != null}")
+            
             if (accessToken != null && refreshToken != null) {
-                // Tokens exist, validate them by fetching user details
-                // The Ktor Auth plugin will automatically refresh if access token is expired
-                validateTokens()
+                // Tokens exist, validate them using optimistic validation
+                // This keeps authState as Authenticated unless there's a clear auth failure
+                Log.d(TAG, "checkAuthStatus: Validating tokens optimistically")
+                validateTokensOptimistic()
             } else {
                 // No tokens, user is not authenticated
+                Log.d(TAG, "checkAuthStatus: No tokens found, setting authState to Unauthenticated")
                 _authState.value = AuthState.Unauthenticated
             }
         }
