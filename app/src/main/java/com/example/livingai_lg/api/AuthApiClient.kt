@@ -2,6 +2,7 @@ package com.example.livingai_lg.api
 
 import android.content.Context
 import android.os.Build
+import android.provider.Settings
 import com.example.livingai_lg.BuildConfig
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -11,6 +12,7 @@ import io.ktor.client.plugins.auth.*
 import io.ktor.client.plugins.auth.providers.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
@@ -76,11 +78,26 @@ class AuthApiClient(private val context: Context) {
     suspend fun verifyOtp(phoneNumber: String, code: String, deviceId: String): Result<VerifyOtpResponse> = runCatching {
         val response: VerifyOtpResponse = client.post("auth/verify-otp") {
             contentType(ContentType.Application.Json)
-            setBody(VerifyOtpRequest(phoneNumber, code, deviceId, getDeviceInfo()))
+            setBody(VerifyOtpRequest(phoneNumber, code.toInt(), deviceId, getDeviceInfo()))
         }.body()
 
         tokenManager.saveTokens(response.accessToken, response.refreshToken)
         response
+    }
+
+    suspend fun signup(request: SignupRequest): Result<SignupResponse> = runCatching {
+        val response = client.post("auth/signup") {
+            contentType(ContentType.Application.Json)
+            setBody(request.copy(deviceId = getDeviceId(), deviceInfo = getDeviceInfo()))
+        }
+
+        // Instead of throwing an exception on non-2xx, we return a result type
+        // that can be handled by the caller.
+        if (response.status.isSuccess()) {
+            response.body<SignupResponse>()
+        } else {
+            response.body<SignupResponse>()
+        }
     }
 
     suspend fun updateProfile(name: String, userType: String): Result<User> = runCatching {
@@ -114,5 +131,9 @@ class AuthApiClient(private val context: Context) {
             languageCode = Locale.getDefault().toString(),
             timezone = TimeZone.getDefault().id
         )
+    }
+
+    private fun getDeviceId(): String {
+        return Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
     }
 }

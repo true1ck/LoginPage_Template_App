@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.livingai_lg.api.AuthApiClient
 import com.example.livingai_lg.api.AuthManager
+import com.example.livingai_lg.api.SignupRequest
 import com.example.livingai_lg.api.TokenManager
 import com.example.livingai_lg.ui.components.backgrounds.DecorativeBackground
 import com.example.livingai_lg.ui.components.DropdownInput
@@ -166,14 +167,25 @@ fun SignUpScreen(
                 // Sign Up button
                 Button(
                     onClick = {
-                        val fullPhoneNumber = "+91${formData.phoneNumber}"
                         scope.launch {
-                            authManager.requestOtp(fullPhoneNumber)
+                            val fullPhoneNumber = "+91${formData.phoneNumber}"
+                            val signupRequest = SignupRequest(
+                                name = formData.name,
+                                phoneNumber = fullPhoneNumber,
+                                state = formData.state,
+                                district = formData.district,
+                                cityVillage = formData.village
+                            )
+                            authManager.signup(signupRequest)
                                 .onSuccess {
-                                    onSignUpClick(fullPhoneNumber,formData.name)
+                                    if (it.success) {
+                                        onSignUpClick(fullPhoneNumber, formData.name)
+                                    } else {
+                                        Toast.makeText(context, it.message ?: "Signup failed", Toast.LENGTH_LONG).show()
+                                    }
                                 }
                                 .onFailure {
-                                    Toast.makeText(context, "Failed to send OTP: ${it.message}", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, "Signup failed: ${it.message}", Toast.LENGTH_LONG).show()
                                 }
                         }
                     },
