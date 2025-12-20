@@ -4,28 +4,24 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Construction
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.example.livingai_lg.api.AuthApiClient
 import com.example.livingai_lg.api.AuthManager
 import com.example.livingai_lg.api.TokenManager
@@ -41,6 +37,12 @@ fun AccountsScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val authManager = remember { AuthManager(context, AuthApiClient(context), TokenManager(context)) }
+    val apiClient = remember { AuthApiClient(context) }
+    
+    // State for API test dialog
+    var showApiResultDialog by remember { mutableStateOf(false) }
+    var apiResultJson by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -130,7 +132,44 @@ fun AccountsScreen(
                 modifier = Modifier
                     .fillMaxWidth().padding(vertical = 12.dp)
                     .clickable {
-                        onApiTest()
+                        // Call API test directly instead of navigating
+                        scope.launch {
+                            isLoading = true
+                            try {
+                                // First get current user's ID
+                                val userDetails = apiClient.getUserDetails().getOrNull()
+                                if (userDetails != null) {
+                                    // Call GET /users/:userId on port 3200
+                                    val result = apiClient.getUserById(userDetails.id, "http://10.0.2.2:3200")
+                                    result.onSuccess { jsonString ->
+                                        apiResultJson = jsonString
+                                        showApiResultDialog = true
+                                        isLoading = false
+                                    }.onFailure { error ->
+                                        Toast.makeText(
+                                            context,
+                                            "API Test Failed: ${error.message}",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                        isLoading = false
+                                    }
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        "Failed to get user details",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    isLoading = false
+                                }
+                            } catch (e: Exception) {
+                                Toast.makeText(
+                                    context,
+                                    "Error: ${e.message}",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                                isLoading = false
+                            }
+                        }
                     },
                 shape = RoundedCornerShape(12.dp),
                 color = Color.White,
@@ -147,18 +186,108 @@ fun AccountsScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Construction,
-                            contentDescription = "Api test",
-                            tint = Color.Gray,
-                            modifier = Modifier.size(24.dp)
-                        )
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Construction,
+                                contentDescription = "Api test",
+                                tint = Color.Gray,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                         Text(
-                            text = "Test API",
+                            text = if (isLoading) "Testing API..." else "Test API",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color.Gray
                         )
+                    }
+                }
+            }
+        }
+    }
+    
+    // API Result Dialog
+    if (showApiResultDialog) {
+        Dialog(onDismissRequest = { showApiResultDialog = false }) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.8f)
+                    .padding(16.dp),
+                shape = RoundedCornerShape(16.dp),
+                color = Color.White
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    // Dialog Header
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "API Test Result",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                        IconButton(onClick = { showApiResultDialog = false }) {
+                            Text(
+                                text = "✕",
+                                fontSize = 20.sp,
+                                color = Color.Gray
+                            )
+                        }
+                    }
+                    
+                    Divider()
+                    
+                    // JSON Content
+                    apiResultJson?.let { json ->
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp)
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                            Text(
+                                text = json,
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 12.sp,
+                                color = Color.Black,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    } ?: run {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No result",
+                                color = Color.Gray
+                            )
+                        }
+                    }
+                    
+                    // Close Button
+                    Spacer(modifier = Modifier.weight(1f))
+                    Button(
+                        onClick = { showApiResultDialog = false },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Close")
                     }
                 }
             }

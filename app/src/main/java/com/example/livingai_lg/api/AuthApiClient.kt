@@ -217,6 +217,55 @@ class AuthApiClient(private val context: Context) {
         response
     }
 
+    // Test API: Get user by ID from BuySellService (port 3200)
+    suspend fun getUserById(userId: String, baseUrl: String = "http://10.0.2.2:3200"): Result<String> = runCatching {
+        android.util.Log.d("AuthApiClient", "getUserById: Calling $baseUrl/users/$userId")
+        
+        // Create a separate client for this external service call
+        HttpClient(CIO) {
+            install(ContentNegotiation) {
+                json(Json {
+                    prettyPrint = true
+                    isLenient = true
+                    ignoreUnknownKeys = true
+                })
+            }
+            install(Auth) {
+                bearer {
+                    loadTokens {
+                        val accessToken = tokenManager.getAccessToken()
+                        if (accessToken != null) {
+                            BearerTokens(accessToken, "")
+                        } else {
+                            null
+                        }
+                    }
+                }
+            }
+            defaultRequest {
+                url(baseUrl)
+            }
+        }.use { testClient ->
+            val response = testClient.get("users/$userId")
+            android.util.Log.d("AuthApiClient", "getUserById: Response status=${response.status}")
+            
+            if (response.status.isSuccess()) {
+                // Get raw JSON string
+                val jsonString = response.bodyAsText()
+                android.util.Log.d("AuthApiClient", "getUserById: Success - JSON=${jsonString.take(200)}...")
+                jsonString
+            } else {
+                val errorText = try {
+                    response.bodyAsText()
+                } catch (e: Exception) {
+                    "Error reading response body"
+                }
+                android.util.Log.e("AuthApiClient", "getUserById: Error - status=${response.status}, body=$errorText")
+                throw Exception("API call failed: ${response.status} - $errorText")
+            }
+        }
+    }
+
     private fun getDeviceInfo(): DeviceInfo {
         return DeviceInfo(
             platform = "android",
