@@ -1,27 +1,25 @@
-package com.example.livingai_lg.ui.navigation
+package com.example.livingai_lg.ui.navigation.navigation_legacy
 
-import androidx.compose.runtime.Composable
+import android.util.Log
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
-import androidx.navigation.NavHostController
 import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.livingai_lg.ui.MainViewModel
+import com.example.livingai_lg.ui.navigation.AppScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 // Note: CoroutineScope, Dispatchers, delay, launch still used in onCreateProfile callbacks
-import com.example.livingai_lg.ui.screens.SaleArchiveScreen
 import com.example.livingai_lg.ui.screens.auth.LandingScreen
 import com.example.livingai_lg.ui.screens.auth.OtpScreen
 import com.example.livingai_lg.ui.screens.auth.SignInScreen
 import com.example.livingai_lg.ui.screens.auth.SignUpScreen
 
-fun NavGraphBuilder.authNavGraph(navController: NavController, mainViewModel: com.example.livingai_lg.ui.MainViewModel) {
+fun NavGraphBuilder.authNavGraph(navController: NavController, mainViewModel: MainViewModel) {
     navigation(
         route = Graph.AUTH,
         startDestination = AppScreen.LANDING
@@ -70,7 +68,7 @@ fun NavGraphBuilder.authNavGraph(navController: NavController, mainViewModel: co
                 name = backStackEntry.arguments?.getString("name") ?: "",
                 mainViewModel = mainViewModel,
                 onCreateProfile = {name -> 
-                    android.util.Log.d("AuthNavGraph", "Navigating to create profile with name: $name")
+                    Log.d("AuthNavGraph", "Navigating to create profile with name: $name")
                     // Navigate to main graph first without popping, then navigate to specific route
                     try {
                         // Navigate to main graph (this will use its start destination)
@@ -87,15 +85,15 @@ fun NavGraphBuilder.authNavGraph(navController: NavController, mainViewModel: co
                                     popUpTo(Graph.AUTH) { inclusive = true }
                                 }
                             } catch (e: Exception) {
-                                android.util.Log.e("AuthNavGraph", "Secondary navigation error: ${e.message}", e)
+                                Log.e("AuthNavGraph", "Secondary navigation error: ${e.message}", e)
                             }
                         }
                     } catch (e: Exception) {
-                        android.util.Log.e("AuthNavGraph", "Navigation error: ${e.message}", e)
+                        Log.e("AuthNavGraph", "Navigation error: ${e.message}", e)
                     }
                 },
                 onLanding = {
-                    android.util.Log.d("AuthNavGraph", "Navigating to landing page for new user")
+                    Log.d("AuthNavGraph", "Navigating to landing page for new user")
                     // Navigate to landing page within AUTH graph
                     try {
                         navController.navigate(AppScreen.LANDING) {
@@ -104,11 +102,11 @@ fun NavGraphBuilder.authNavGraph(navController: NavController, mainViewModel: co
                             launchSingleTop = true
                         }
                     } catch (e: Exception) {
-                        android.util.Log.e("AuthNavGraph", "Navigation to landing error: ${e.message}", e)
+                        Log.e("AuthNavGraph", "Navigation to landing error: ${e.message}", e)
                     }
                 },
                 onSuccess = { 
-                    android.util.Log.d("AuthNavGraph", "Sign-in successful - navigating to ChooseServiceScreen")
+                    Log.d("AuthNavGraph", "Sign-in successful - navigating to ChooseServiceScreen")
                     // Navigate to MAIN graph which starts at ChooseServiceScreen (startDestination)
                     try {
                         navController.navigate(Graph.MAIN) {
@@ -117,7 +115,7 @@ fun NavGraphBuilder.authNavGraph(navController: NavController, mainViewModel: co
                             launchSingleTop = true
                         }
                     } catch (e: Exception) {
-                        android.util.Log.e("AuthNavGraph", "Navigation error: ${e.message}", e)
+                        Log.e("AuthNavGraph", "Navigation error: ${e.message}", e)
                     }
                 }
             )
@@ -141,7 +139,7 @@ fun NavGraphBuilder.authNavGraph(navController: NavController, mainViewModel: co
                 signupVillage = backStackEntry.arguments?.getString("village"),
                 mainViewModel = mainViewModel,
                 onCreateProfile = {name -> 
-                    android.util.Log.d("AuthNavGraph", "Navigating to create profile with name: $name")
+                    Log.d("AuthNavGraph", "Navigating to create profile with name: $name")
                     // Navigate to main graph first without popping, then navigate to specific route
                     try {
                         // Navigate to main graph (this will use its start destination)
@@ -158,15 +156,15 @@ fun NavGraphBuilder.authNavGraph(navController: NavController, mainViewModel: co
                                     popUpTo(Graph.AUTH) { inclusive = true }
                                 }
                             } catch (e: Exception) {
-                                android.util.Log.e("AuthNavGraph", "Secondary navigation error: ${e.message}", e)
+                                Log.e("AuthNavGraph", "Secondary navigation error: ${e.message}", e)
                             }
                         }
                     } catch (e: Exception) {
-                        android.util.Log.e("AuthNavGraph", "Navigation error: ${e.message}", e)
+                        Log.e("AuthNavGraph", "Navigation error: ${e.message}", e)
                     }
                 },
                 onLanding = {
-                    android.util.Log.d("AuthNavGraph", "Navigating to landing page for new user")
+                    Log.d("AuthNavGraph", "Navigating to landing page for new user")
                     // Navigate to landing page within AUTH graph
                     try {
                         navController.navigate(AppScreen.LANDING) {
@@ -175,11 +173,11 @@ fun NavGraphBuilder.authNavGraph(navController: NavController, mainViewModel: co
                             launchSingleTop = true
                         }
                     } catch (e: Exception) {
-                        android.util.Log.e("AuthNavGraph", "Navigation to landing error: ${e.message}", e)
+                        Log.e("AuthNavGraph", "Navigation to landing error: ${e.message}", e)
                     }
                 },
                 onSuccess = { 
-                    android.util.Log.d("AuthNavGraph", "Sign-in successful - navigating to ChooseServiceScreen")
+                    Log.d("AuthNavGraph", "Sign-in successful - navigating to ChooseServiceScreen")
                     // Navigate to MAIN graph which starts at ChooseServiceScreen (startDestination)
                     try {
                         navController.navigate(Graph.MAIN) {
@@ -188,7 +186,7 @@ fun NavGraphBuilder.authNavGraph(navController: NavController, mainViewModel: co
                             launchSingleTop = true
                         }
                     } catch (e: Exception) {
-                        android.util.Log.e("AuthNavGraph", "Navigation error: ${e.message}", e)
+                        Log.e("AuthNavGraph", "Navigation error: ${e.message}", e)
                     }
                 }
             )

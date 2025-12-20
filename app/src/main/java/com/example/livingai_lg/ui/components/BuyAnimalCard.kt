@@ -44,7 +44,8 @@ fun BuyAnimalCard(
     onSavedChange: (Boolean) -> Unit,
     onProductClick: () -> Unit,
     onSellerClick:(sellerId: String)-> Unit,
-    onBookmarkClick: () -> Unit
+    onBookmarkClick: () -> Unit,
+    onInfoClick: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -164,7 +165,7 @@ fun BuyAnimalCard(
                                 Icon(
                                     imageVector = Icons.Outlined.Info,
                                     contentDescription = null,
-                                    Modifier.padding(horizontal = 4.dp).size(16.dp).align(Alignment.CenterVertically),
+                                    Modifier.padding(horizontal = 4.dp).size(16.dp).align(Alignment.CenterVertically).clickable{onInfoClick()},
 
                                 )
 

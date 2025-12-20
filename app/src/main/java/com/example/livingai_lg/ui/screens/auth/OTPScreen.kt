@@ -239,7 +239,7 @@ Column(
                                                     val needsProfile = signupResponse.needsProfile == true || verifyResponse.needsProfile
                                                     android.util.Log.d("OTPScreen", "Signup successful. needsProfile=$needsProfile, navigating...")
                                                     // Refresh auth status - this will trigger navigation via AppNavigation's LaunchedEffect
-                                                    mainViewModel.refreshAuthStatus()
+//                                                    mainViewModel.refreshAuthStatus()
                                                     try {
                                                         if (needsProfile) {
                                                             android.util.Log.d("OTPScreen", "Navigating to create profile screen with name: $name")
@@ -247,6 +247,7 @@ Column(
                                                         } else {
                                                             // Don't manually navigate - let AppNavigation handle it
                                                             android.util.Log.d("OTPScreen", "Signup successful - auth state updated, navigation will happen automatically")
+                                                            onSuccess()
                                                         }
                                                     } catch (e: Exception) {
                                                         android.util.Log.e("OTPScreen", "Navigation error: ${e.message}", e)
@@ -266,6 +267,7 @@ Column(
                                                         } else {
                                                             // Don't manually navigate - let AppNavigation handle it
                                                             android.util.Log.d("OTPScreen", "Signup successful - auth state updated, navigation will happen automatically")
+                                                            onSuccess()
                                                         }
                                                     } catch (e: Exception) {
                                                         android.util.Log.e("OTPScreen", "Navigation error: ${e.message}", e)
@@ -325,7 +327,12 @@ Column(
                                     // Tokens are now saved (synchronously via commit())
                                     // Refresh auth status - this will optimistically set authState to Authenticated
                                     // The LaunchedEffect in AppNavigation will automatically navigate to ChooseServiceScreen
-                                    mainViewModel.refreshAuthStatus()
+                                    //mainViewModel.refreshAuthStatus()
+                                    if(response.needsProfile) {
+                                        onCreateProfile(name)
+                                    } else {
+                                        onSuccess()
+                                    }
                                     android.util.Log.d("OTPScreen", "Auth status refreshed - navigation will happen automatically via LaunchedEffect")
                                 }
                                 .onFailure { error ->

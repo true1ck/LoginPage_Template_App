@@ -29,7 +29,7 @@ val sampleAnimals = listOf(
         name = "Rita",
         age = 45,
         breed = "Gir",
-        breedInfo = "The 2nd best in India",
+        breedInfo = "The best in India",
         location = "Punjab",
         distance = 12000,
         imageUrl = listOf("https://external-content.duckduckgo.com/iu/?u=http%3A%2F%2F4.bp.blogspot.com%2F_tecSnxaePMo%2FTLLVknW8dOI%2FAAAAAAAAACo%2F_kd1ZNBXU1o%2Fs1600%2FGIR%2CGujrat.jpg&f=1&nofb=1&ipt=da6ba1d040c396b64d3f08cc99998f66200dcd6c001e4a56def143ab3d1a87ea","https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fcpimg.tistatic.com%2F4478702%2Fb%2F4%2Fgir-cow.jpg&f=1&nofb=1&ipt=19bf391461480585c786d01433d863a383c60048ac2ce063ce91f173e215205d"),

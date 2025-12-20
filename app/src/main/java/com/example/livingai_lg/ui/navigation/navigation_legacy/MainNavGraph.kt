@@ -1,18 +1,15 @@
-package com.example.livingai_lg.ui.navigation
+package com.example.livingai_lg.ui.navigation.navigation_legacy
 
 import android.util.Log
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
-import com.example.livingai_lg.ui.navigation.AppScreen
-import com.example.livingai_lg.ui.navigation.Graph
 import com.example.farmmarketplace.ui.screens.CallsScreen
 import com.example.farmmarketplace.ui.screens.ContactsScreen
-import com.example.livingai_lg.ui.models.profileTypes
+import com.example.livingai_lg.ui.navigation.AppScreen
 import com.example.livingai_lg.ui.screens.AccountsScreen
 import com.example.livingai_lg.ui.screens.AnimalProfileScreen
 import com.example.livingai_lg.ui.screens.BuyScreen
@@ -137,7 +134,8 @@ fun NavGraphBuilder.mainNavGraph(navController: NavController) {
                     navController.navigate(Graph.AUTH) {
                         popUpTo(0) { inclusive = true }
                     }
-                }
+                },
+                onApiTest = {navController.navigate(AppScreen.API_TEST)}
             )
         }
 

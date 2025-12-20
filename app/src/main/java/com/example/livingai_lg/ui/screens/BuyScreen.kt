@@ -36,6 +36,7 @@ import com.example.livingai_lg.R
 import com.example.livingai_lg.ui.components.ActionPopup
 import com.example.livingai_lg.ui.components.AddressSelectorOverlay
 import com.example.livingai_lg.ui.components.FilterOverlay
+import com.example.livingai_lg.ui.components.InfoOverlay
 import com.example.livingai_lg.ui.components.NotificationsOverlay
 import com.example.livingai_lg.ui.components.SortOverlay
 import com.example.livingai_lg.ui.models.sampleNotifications
@@ -59,6 +60,9 @@ fun BuyScreen(
     var showSavedPopup by remember { mutableStateOf(false) }
     var showNotifications by remember { mutableStateOf(false) }
     val sampleNotifications = sampleNotifications
+    var showInfoOverlay by remember { mutableStateOf(false) }
+    var selectedItemId by remember { mutableStateOf<String?>(null) }
+
 
     Box(
         modifier = Modifier
@@ -168,7 +172,9 @@ fun BuyScreen(
                             onSavedChange = { isSaved.value = it },
                             onProductClick = { onProductClick(animal.id)},
                             onSellerClick = onSellerClick,
-                            onBookmarkClick = { showSavedPopup = true }
+                            onBookmarkClick = { showSavedPopup = true },
+                            onInfoClick = { showInfoOverlay = true
+                                selectedItemId=animal.id},
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -211,6 +217,15 @@ fun BuyScreen(
             onSubmitClick = {
                 // apply filters
             }
+        )
+
+        val animal = sampleAnimals.find { it.id == selectedItemId }
+
+        InfoOverlay(
+            visible = showInfoOverlay,
+            title = animal?.breed ?:"",
+            text = animal?.breedInfo ?: "",
+            onDismiss = { showInfoOverlay = false }
         )
 
         ActionPopup(

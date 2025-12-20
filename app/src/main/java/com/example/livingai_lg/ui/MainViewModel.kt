@@ -7,7 +7,10 @@ import androidx.lifecycle.viewModelScope
 import com.example.livingai_lg.api.AuthApiClient
 import com.example.livingai_lg.api.TokenManager
 import com.example.livingai_lg.api.UserDetails
+import com.example.livingai_lg.ui.navigation.NavEvent
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
@@ -341,6 +344,16 @@ class MainViewModel(context: Context) : ViewModel() {
                     // Even if the API call fails, force the user to an unauthenticated state
                     _authState.value = AuthState.Unauthenticated
                 }
+        }
+    }
+
+    // Used in navigation logic.
+    private val _navEvents = MutableSharedFlow<NavEvent>()
+    val navEvents = _navEvents.asSharedFlow()
+
+    fun emitNavEvent(event: NavEvent) {
+        viewModelScope.launch {
+            _navEvents.emit(event)
         }
     }
 }

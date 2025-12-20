@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Construction
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -34,7 +35,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun AccountsScreen(
     onBackClick: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onApiTest: () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -119,6 +121,43 @@ fun AccountsScreen(
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color(0xFFE53935)
+                        )
+                    }
+                }
+            }
+
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth().padding(vertical = 12.dp)
+                    .clickable {
+                        onApiTest()
+                    },
+                shape = RoundedCornerShape(12.dp),
+                color = Color.White,
+                shadowElevation = 2.dp
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 20.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Construction,
+                            contentDescription = "Api test",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Text(
+                            text = "Test API",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.Gray
                         )
                     }
                 }
