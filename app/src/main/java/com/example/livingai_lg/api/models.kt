@@ -96,9 +96,9 @@ data class User(
 
 @Serializable
 data class Location(
-    val city: String?,
-    val state: String?,
-    val pincode: String?
+    @SerialName("city_village") val cityVillage: String? = null,
+    val state: String? = null,
+    val pincode: String? = null
 )
 
 @Serializable
