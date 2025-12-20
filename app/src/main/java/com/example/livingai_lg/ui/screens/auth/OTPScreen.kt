@@ -1,5 +1,6 @@
 package com.example.livingai_lg.ui.screens.auth
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
@@ -8,6 +9,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,6 +20,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.platform.LocalContext
@@ -43,6 +47,10 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 
 
@@ -59,16 +67,24 @@ fun OtpScreen(
     signupDistrict: String? = null,
     signupVillage: String? = null,
 ) {
-    val otp = remember { mutableStateOf("") }
+    val otpLength = 6
+    val otp = remember { mutableStateOf(List<String>(otpLength) { "" }) }
+    var focusedIndex by remember { mutableStateOf(0) }
     val context = LocalContext.current.applicationContext
     val scope = rememberCoroutineScope()
     val authManager = remember { AuthManager(context, AuthApiClient(context), TokenManager(context)) }
-    
-    // Countdown timer state (2 minutes = 120 seconds)
-    var countdownSeconds by remember { mutableStateOf(120) }
-    
-    // Start countdown when screen is composed
-    LaunchedEffect(Unit) {
+
+    fun updateOtpAt(index: Int, value: String) {
+        otp.value = otp.value.mapIndexed { i, old ->
+            if (i == index) value else old
+        }
+    }
+
+    // Countdown timer state (1 minutes = 60 seconds)
+    var countdownSeconds by remember { mutableStateOf(10) }
+    var countdownKey by remember { mutableStateOf(0) }
+
+    LaunchedEffect(countdownKey) {
         while (countdownSeconds > 0) {
             delay(1000) // Wait 1 second
             countdownSeconds--
@@ -142,35 +158,69 @@ Column(
         Modifier.fillMaxWidth().padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(s(17f))
     ) {
-        OtpInputRow(
-            otpLength = 6,
-            scale = scale,
-            otp = otp.value,
-            onOtpChange = { if (it.length <= 6) otp.value = it }
+        OTPInputTextFields(
+            otpLength = otpLength,
+            otpValues = otp.value,
+            onUpdateOtpValuesByIndex = { index, value ->
+                updateOtpAt(index,value)
+            },
+            onOtpInputComplete = {}
         )
     }
     
     // ---------------------------
     // Countdown Timer
     // ---------------------------
-    Text(
-        text = countdownText,
-        color = Color(0xFF927B5E),
-        fontSize = fs(16f),
-        fontWeight = FontWeight.Medium,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 16.dp),
-        textAlign = TextAlign.Center,
-        style = LocalTextStyle.current.copy(
-            shadow = Shadow(
-                color = Color.Black.copy(alpha = 0.15f),
-                offset = Offset(0f, s(2f).value),
-                blurRadius = s(2f).value
+    if (countdownSeconds > 0) {
+        Text(
+            text = countdownText,
+            color = Color(0xFF927B5E),
+            fontSize = fs(16f),
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            textAlign = TextAlign.Center,
+            style = LocalTextStyle.current.copy(
+                shadow = Shadow(
+                    color = Color.Black.copy(alpha = 0.15f),
+                    offset = Offset(0f, s(2f).value),
+                    blurRadius = s(2f).value
+                )
             )
         )
-    )
-    
+    } else {
+        Text(
+            text = "Resend OTP",
+            color = Color(0xFFE17100),
+            fontSize = fs(16f),
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier
+                .padding(vertical = 16.dp)
+                .clickable {
+                    // 🔹 Stub for now
+                    scope.launch {
+
+                        authManager.requestOtp(phoneNumber)
+                            .onSuccess {
+                                // OTP sent successfully, navigate to OTP screen with signup data
+                                // Pass signup form data through the callback
+                                Toast.makeText(context, "Resent OTP",Toast.LENGTH_LONG).show()
+                                countdownSeconds = 10
+                                countdownKey++
+                            }
+                            .onFailure {
+                                Toast.makeText(context, "Failed to send OTP: ${it.message}", Toast.LENGTH_LONG).show()
+                                Log.e("OtpScreen", "Failed to send OTP ${it.message}", it)
+
+                            }
+                    }
+                },
+            textAlign = TextAlign.Center
+        )
+    }
+
+
     // ---------------------------
     // Continue Button
     // ---------------------------
@@ -199,14 +249,20 @@ Column(
                 interactionSource = remember { MutableInteractionSource() },
                 onClick = {
                     scope.launch {
+                        val otpString = otp.value.joinToString("") { it?.toString() ?: "" }
+
+                        if (otpString.length < otpLength) {
+                            Toast.makeText(context, "Please enter full OTP", Toast.LENGTH_SHORT).show()
+                            return@launch
+                        }
+
                         if (isSignupFlow) {
                             // For signup flow: Verify OTP first, then call signup API to update user with name/location
                             android.util.Log.d("OTPScreen", "Signup flow: Verifying OTP...")
-                            authManager.login(phoneNumber, otp.value)
+                            authManager.login(phoneNumber, otpString)
                                 .onSuccess { verifyResponse ->
                                     android.util.Log.d("OTPScreen", "OTP verified successfully. Calling signup API...")
                                     // OTP verified successfully - user is now logged in
-                                    // Refresh auth status in MainViewModel so AppNavigation knows user is authenticated
                                     mainViewModel.refreshAuthStatus()
                                     // Now call signup API to update user with name and location
                                     val signupRequest = SignupRequest(
@@ -245,8 +301,7 @@ Column(
                                                             android.util.Log.d("OTPScreen", "Navigating to create profile screen with name: $name")
                                                             onCreateProfile(name)
                                                         } else {
-                                                            // Don't manually navigate - let AppNavigation handle it
-                                                            android.util.Log.d("OTPScreen", "Signup successful - auth state updated, navigation will happen automatically")
+                                                            android.util.Log.d("OTPScreen", "Signup successful - auth state updated")
                                                             onSuccess()
                                                         }
                                                     } catch (e: Exception) {
@@ -258,7 +313,7 @@ Column(
                                                     // Navigate to success anyway since verify-otp succeeded
                                                     android.util.Log.d("OTPScreen", "Signup API returned false, but OTP verified. Navigating anyway...")
                                                     val needsProfile = verifyResponse.needsProfile
-                                                    // Refresh auth status - this will trigger navigation via AppNavigation's LaunchedEffect
+                                                    // Refresh auth status
                                                     mainViewModel.refreshAuthStatus()
                                                     try {
                                                         if (needsProfile) {
@@ -266,7 +321,7 @@ Column(
                                                             onCreateProfile(name)
                                                         } else {
                                                             // Don't manually navigate - let AppNavigation handle it
-                                                            android.util.Log.d("OTPScreen", "Signup successful - auth state updated, navigation will happen automatically")
+                                                            android.util.Log.d("OTPScreen", "Signup successful - auth state updated")
                                                             onSuccess()
                                                         }
                                                     } catch (e: Exception) {
@@ -288,7 +343,7 @@ Column(
                                             // For existing users, use existing logic
                                             val needsProfile = verifyResponse.needsProfile
                                             android.util.Log.d("OTPScreen", "Navigating despite signup failure. needsProfile=$needsProfile")
-                                            // Refresh auth status - this will trigger navigation via AppNavigation's LaunchedEffect
+                                            // Refresh auth status
                                             mainViewModel.refreshAuthStatus()
                                             try {
                                                 // If this is a signup flow and signup failed, treat as new user
@@ -299,8 +354,8 @@ Column(
                                                     android.util.Log.d("OTPScreen", "Navigating to create profile screen with name: $name")
                                                     onCreateProfile(name)
                                                 } else {
-                                                    // Don't manually navigate - let AppNavigation handle it
-                                                    android.util.Log.d("OTPScreen", "Signup successful - auth state updated, navigation will happen automatically")
+                                                     android.util.Log.d("OTPScreen", "Signup successful - auth state updated")
+                                                    onSuccess()
                                                 }
                                             } catch (e: Exception) {
                                                 android.util.Log.e("OTPScreen", "Navigation error: ${e.message}", e)
@@ -321,7 +376,7 @@ Column(
                                 }
                         } else {
                             // For sign-in flow: Just verify OTP and login
-                            authManager.login(phoneNumber, otp.value)
+                            authManager.login(phoneNumber, otpString)
                                 .onSuccess { response ->
                                     android.util.Log.d("OTPScreen", "Sign-in OTP verified. needsProfile=${response.needsProfile}")
                                     // Tokens are now saved (synchronously via commit())
@@ -379,138 +434,111 @@ Column(
 }
 
 @Composable
-fun OtpInputRow(
+fun OTPInputTextFields(
     otpLength: Int,
-    scale: Float,
-    otp: String,
-    onOtpChange: (String) -> Unit
+    onUpdateOtpValuesByIndex: (Int, String) -> Unit,
+    onOtpInputComplete: () -> Unit,
+    modifier: Modifier = Modifier,
+    otpValues: List<String> = List(otpLength) { "" }, // Pass this as default for future reference
+    isError: Boolean = false,
 ) {
-    BoxWithConstraints(
-        modifier = Modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center
+    val focusRequesters = List(otpLength) { FocusRequester() }
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly
+//        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally)
     ) {
-        val maxRowWidth = maxWidth
-
-        val spacing = (12f * scale).dp
-        val totalSpacing = spacing * (otpLength - 1)
-
-        val boxWidth = ((maxRowWidth - totalSpacing) / otpLength)
-            .coerceAtMost((66f * scale).dp)
-
-        val focusRequesters = remember {
-            List(otpLength) { FocusRequester() }
-        }
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(spacing),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            repeat(otpLength) { index ->
-                OtpBox(
-                    index = index,
-                    otp = otp,
-                    scale = scale,
-                    width = boxWidth, // 👈 fixed width
-                    focusRequester = focusRequesters[index],
-                    onRequestFocus = {
-                        val firstEmpty = otp.length.coerceAtMost(otpLength - 1)
-                        focusRequesters[firstEmpty].requestFocus()
+        otpValues.forEachIndexed { index, value ->
+            OutlinedTextField(
+                modifier = Modifier
+                    .weight(1f)
+//                    .width(64.dp)
+                    .padding(6.dp)
+                    .focusRequester(focusRequesters[index])
+                    .background(Color.White)
+                    .onKeyEvent { keyEvent ->
+                        if (keyEvent.key == Key.Backspace) {
+                            if (otpValues[index].isEmpty() && index > 0) {
+                                onUpdateOtpValuesByIndex(index, "")
+                                focusRequesters[index - 1].requestFocus()
+                            } else {
+                                onUpdateOtpValuesByIndex(index, "")
+                            }
+                            true
+                        } else {
+                            false
+                        }
                     },
-                    onNextFocus = {
-                        if (index + 1 < otpLength) focusRequesters[index + 1].requestFocus()
+                value = value,
+                onValueChange = { newValue ->
+                    // To use OTP code copied from keyboard
+                    if (newValue.length == otpLength) {
+                        for (i in otpValues.indices) {
+                            onUpdateOtpValuesByIndex(
+                                i,
+                                if (i < newValue.length && newValue[i].isDigit()) newValue[i].toString() else ""
+                            )
+                        }
+
+                        keyboardController?.hide()
+                        onOtpInputComplete() // you should validate the otp values first for, if it is only digits or isNotEmpty
+                    } else if (newValue.length <= 1) {
+                        onUpdateOtpValuesByIndex(index, newValue)
+                        if (newValue.isNotEmpty()) {
+                            if (index < otpLength - 1) {
+                                focusRequesters[index + 1].requestFocus()
+                            } else {
+                                keyboardController?.hide()
+                                focusManager.clearFocus()
+                                onOtpInputComplete()
+                            }
+                        }
+                    } else {
+                        if (index < otpLength - 1) focusRequesters[index + 1].requestFocus()
+                    }
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = if (index == otpLength - 1) ImeAction.Done else ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = {
+                        if (index < otpLength - 1) {
+                            focusRequesters[index + 1].requestFocus()
+                        }
                     },
-                    onPrevFocus = {
-                        if (index - 1 >= 0) focusRequesters[index - 1].requestFocus()
-                    },
-                    onChange = onOtpChange
+                    onDone = {
+                        keyboardController?.hide()
+                        focusManager.clearFocus()
+                        onOtpInputComplete()
+                    }
+                ),
+                shape = MaterialTheme.shapes.small,
+                isError = isError,
+                textStyle = TextStyle(
+                    textAlign = TextAlign.Center,
+                    fontSize = MaterialTheme.typography.bodyLarge.fontSize
                 )
+            )
+
+            LaunchedEffect(value) {
+                if (otpValues.all { it.isNotEmpty() }) {
+                    focusManager.clearFocus()
+                    onOtpInputComplete()
+                }
             }
         }
     }
-}
 
-
-
-
-@Composable
-private fun OtpBox(
-    index: Int,
-    otp: String,
-    scale: Float,
-    width: Dp,
-    focusRequester: FocusRequester,
-    onRequestFocus: () -> Unit,
-    onNextFocus: () -> Unit,
-    onPrevFocus: () -> Unit,
-    onChange: (String) -> Unit
-) {
-    val boxH = 52f * scale
-    val radius = 16f * scale
-
-    val char = otp.getOrNull(index)?.toString() ?: ""
-
-    Box(
-        modifier = Modifier
-            .size(width, boxH.dp)
-            .shadow((4f * scale).dp, RoundedCornerShape(radius.dp))
-            .background(Color.White, RoundedCornerShape(radius.dp))
-            .clickable { onRequestFocus() },
-        contentAlignment = Alignment.Center
-    ) {
-        BasicTextField(
-            value = char,
-            onValueChange = { new ->
-                when {
-                    // DIGIT ENTERED
-                    new.matches(Regex("\\d")) -> {
-                        val updated = otp.padEnd(index + 1, ' ').toMutableList()
-                        updated[index] = new.first()
-                        onChange(updated.joinToString("").trim())
-                        onNextFocus()
-                    }
-
-                    // BACKSPACE WHEN CHARACTER EXISTS
-                    new.isEmpty() && char.isNotEmpty() -> {
-                        val updated = otp.toMutableList()
-                        updated.removeAt(index)
-                        onChange(updated.joinToString(""))
-                    }
-                }
-            },
-            modifier = Modifier
-                .focusRequester(focusRequester)
-                .onPreviewKeyEvent { event ->
-                    if (event.type == KeyEventType.KeyDown &&
-                        event.key == Key.Backspace &&
-                        char.isEmpty() &&
-                        index > 0
-                    ) {
-                        val updated = otp.toMutableList()
-                        updated.removeAt(index - 1)          // 👈 clear previous box
-                        onChange(updated.joinToString(""))
-                        onPrevFocus()
-                        true
-                    }
-                    else {
-                        false
-                    }
-                },
-            textStyle = LocalTextStyle.current.copy(
-                fontSize = (24f * scale).sp,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center
-            ),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.NumberPassword
-            ),
-            singleLine = true
-        )
-
-
-
+    LaunchedEffect(Unit) {
+        focusRequesters.first().requestFocus()
     }
 }
-
 
 
 

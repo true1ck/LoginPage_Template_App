@@ -1,5 +1,6 @@
 package com.example.livingai_lg.ui.screens.auth
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
@@ -108,6 +109,7 @@ fun SignInScreen(
                                             }
                                             .onFailure {
                                                 Toast.makeText(context, "Failed to send OTP: ${it.message}", Toast.LENGTH_LONG).show()
+                                                Log.e("SignInScreen", "Failed to send OTP ${it.message}", it)
                                             }
                                     } else {
                                         // User doesn't exist (shouldn't happen if API works correctly)

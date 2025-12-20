@@ -113,7 +113,7 @@ fun AppNavigation(
      * --------------------------------------------------- */
     NavHost(
         navController = navController,
-        startDestination = AppScreen.LANDING
+        startDestination = if(authState is AuthState.Authenticated) AppScreen.BUY_ANIMALS else AppScreen.LANDING
     ) {
 
         /* ---------------- AUTH ---------------- */
