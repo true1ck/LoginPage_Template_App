@@ -19,6 +19,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,42 +31,47 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.livingai_lg.ui.components.DropdownInput
 import com.example.livingai_lg.ui.components.RangeFilter
+import com.example.livingai_lg.ui.components.WishlistNameOverlay
+import com.example.livingai_lg.ui.models.FiltersState
+import com.example.livingai_lg.ui.models.RangeFilterState
+import com.example.livingai_lg.ui.models.TextFilter
+import com.example.livingai_lg.ui.models.WishlistEntry
+import com.example.livingai_lg.ui.models.WishlistStore
+import com.example.livingai_lg.ui.models.isDefault
 import com.example.livingai_lg.ui.theme.AppTypography
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FilterScreen(
+    appliedFilters: FiltersState,
+    wishlistEditMode: Boolean = false,
+    onSubmitClick: (FiltersState) -> Unit,
     onBackClick: () -> Unit = {},
-    onSubmitClick: () -> Unit = {},
     onCancelClick: () -> Unit = {},
 ) {
-    var selectedAnimal by remember { mutableStateOf("") }
-    var selectedBreed by remember { mutableStateOf("") }
-    var selectedDistance by remember { mutableStateOf("") }
-    var selectedGender by remember { mutableStateOf("") }
+    var filters by remember {
+        mutableStateOf(appliedFilters)
+    }
+    var showWishlistOverlay by remember { mutableStateOf(false) }
+
+    var selectedAnimal =filters.animal
+    var selectedBreed = filters.breed
+    var selectedDistance = filters.distance
+    var selectedGender = filters.gender
 
     var animalExpanded by remember { mutableStateOf(false) }
     var breedExpanded by remember { mutableStateOf(false) }
     var distanceExpanded by remember { mutableStateOf(false) }
     var genderExpanded by remember { mutableStateOf(false) }
 
-    var priceFrom by remember { mutableStateOf("0") }
-    var priceTo by remember { mutableStateOf("90,000") }
-    var priceSliderValue by remember { mutableFloatStateOf(0f) }
+    var price =filters.price
+    var age = filters.age
+    var weight = filters.weight
+    var milkYield = filters.milkYield
+    var calving = filters.calving
 
-    var ageFrom by remember { mutableStateOf("1") }
-    var ageTo by remember { mutableStateOf("20") }
+    var selectedPregnancyStatus = filters.pregnancyStatuses
 
-    var selectedPregnancyStatus by remember { mutableStateOf(setOf<String>()) }
-
-    var weightFrom by remember { mutableStateOf("0") }
-    var weightTo by remember { mutableStateOf("9000") }
-
-    var milkYieldFrom by remember { mutableStateOf("0") }
-    var milkYieldTo by remember { mutableStateOf("900") }
-
-    var calvingFrom by remember { mutableStateOf(0) }
-    var calvingTo by remember { mutableStateOf(10) }
 
     var calvingFromExpanded by remember { mutableStateOf(false) }
     var calvingToExpanded by remember { mutableStateOf(false) }
@@ -73,7 +79,7 @@ fun FilterScreen(
     val maxCalving = 10
 
     val calvingFromOptions = (0..maxCalving).map { it.toString() }
-    val calvingToOptions = (calvingFrom..maxCalving).map { it.toString() }
+    val calvingToOptions = (calving.min..maxCalving).map { it.toString() }
 
     Column(
         modifier = Modifier
@@ -109,6 +115,21 @@ fun FilterScreen(
                         fontWeight = FontWeight.Normal,
                         color = Color.Black
                     )
+
+                    if(!wishlistEditMode){
+                        IconButton(
+                            onClick = {
+                                if (!filters.isDefault()) {
+                                    showWishlistOverlay = true
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FavoriteBorder,
+                                contentDescription = "Add to Wishlist"
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -128,15 +149,21 @@ fun FilterScreen(
             ) {
                 DropdownInput(
                     label = "Animal",
-                    selected = selectedAnimal,
+                    selected = if (selectedAnimal.filterSet) selectedAnimal.value else "",
                     options = listOf("Cow", "Buffalo", "Goat", "Sheep"),
                     expanded = animalExpanded,
                     onExpandedChange = { animalExpanded = it },
                     onSelect = { item ->
-                        selectedAnimal = item
+                        filters = filters.copy(
+                            animal = TextFilter(
+                                value = item,
+                                filterSet = true
+                            )
+                        )
                         animalExpanded = false
                     },
                     placeholder = "Select Animal",   // <--- half width
+                    textColor = if (selectedAnimal.filterSet) Color.Black else Color.Gray
                 )
             }
 
@@ -146,15 +173,21 @@ fun FilterScreen(
             ) {
                 DropdownInput(
                     label = "Breed",
-                    selected = selectedBreed,
+                    selected = if (selectedBreed.filterSet) selectedBreed.value else "",
                     options = listOf("Holstein", "Jersey", "Gir", "Sahiwal"),
                     expanded = breedExpanded,
                     onExpandedChange = { breedExpanded = it },
                     onSelect = { item ->
-                        selectedBreed = item
+                        filters = filters.copy(
+                            breed = TextFilter(
+                                value = item,
+                                filterSet = true
+                            )
+                        )
                         breedExpanded = false
                     },
                     placeholder = "Select Breed",   // <--- half width
+                    textColor = if (selectedAnimal.filterSet) Color.Black else Color.Gray
                 )
             }
 
@@ -166,14 +199,21 @@ fun FilterScreen(
                 ) {
                     RangeFilter(
                         modifier = Modifier.fillMaxWidth(), // 👈 important
+
                         label = "Price",
                         min = 0,
                         max = 90_000,
-                        valueFrom = priceFrom.toInt(),
-                        valueTo = priceTo.replace(",", "").toInt(),
+                        valueFrom = price.min,
+                        valueTo = price.max,
+                        modified = price.filterSet,
                         onValueChange = { from, to ->
-                            priceFrom = from.toString()
-                            priceTo = to.toString()
+                            filters = filters.copy(
+                                price = RangeFilterState(
+                                    min = from,
+                                    max = to,
+                                    filterSet = true
+                                )
+                            )
                         }
                     )
                 }
@@ -183,18 +223,26 @@ fun FilterScreen(
 
                 ) {
                     RangeFilter(
-                        modifier = Modifier.fillMaxWidth(),
-                        label = "Age",
+                        modifier = Modifier.fillMaxWidth(), // 👈 important
+
+                        label = "Age (years)",
                         min = 0,
                         max = 20,
-                        valueFrom = ageFrom.toInt(),
-                        valueTo = ageTo.replace(",", "").toInt(),
+                        valueFrom = age.min,
+                        valueTo = age.max,
                         showSlider = false,
+                        modified = age.filterSet,
                         onValueChange = { from, to ->
-                            ageFrom = from.toString()
-                            ageTo = to.toString()
+                            filters = filters.copy(
+                                age = RangeFilterState(
+                                    min = from,
+                                    max = to,
+                                    filterSet = true
+                                )
+                            )
                         }
                     )
+
                 }
 
 
@@ -206,15 +254,21 @@ fun FilterScreen(
                 ) {
                     DropdownInput(
                         label = "Distance",
-                        selected = selectedDistance,
+                        selected = if (selectedDistance.filterSet) selectedDistance.value else "",
                         options = listOf("0-5 km", "5-10 km", "10-20 km", "20+ km"),
                         expanded = distanceExpanded,
                         onExpandedChange = { distanceExpanded = it },
                         onSelect = { item ->
-                            selectedDistance = item
+                            filters = filters.copy(
+                                distance = TextFilter(
+                                    value = item,
+                                    filterSet = true
+                                )
+                            )
                             distanceExpanded = false
                         },
                         placeholder = "Choose Distance",   // <--- half width
+                        textColor = if (selectedAnimal.filterSet) Color.Black else Color.Gray
                     )
                 }
 
@@ -224,15 +278,21 @@ fun FilterScreen(
                 ) {
                     DropdownInput(
                         label = "Gender",
-                        selected = selectedGender,
+                        selected = if (selectedGender.filterSet) selectedGender.value else "",
                         options = listOf("Male", "Female"),
                         expanded = genderExpanded,
                         onExpandedChange = { genderExpanded = it },
                         onSelect = { item ->
-                            selectedGender = item
+                            filters = filters.copy(
+                                gender = TextFilter(
+                                    value = item,
+                                    filterSet = true
+                                )
+                            )
                             genderExpanded = false
                         },
                         placeholder = "Choose Gender",   // <--- half width
+                        textColor = if (selectedAnimal.filterSet) Color.Black else Color.Gray
                     )
                 }
 
@@ -259,11 +319,13 @@ fun FilterScreen(
                             label = status,
                             isSelected = selectedPregnancyStatus.contains(status),
                             onClick = {
-                                selectedPregnancyStatus = if (selectedPregnancyStatus.contains(status)) {
-                                    selectedPregnancyStatus - status
-                                } else {
-                                    selectedPregnancyStatus + status
-                                }
+                                filters = filters.copy(
+                                    pregnancyStatuses =
+                                        if (filters.pregnancyStatuses.contains(status))
+                                            filters.pregnancyStatuses - status
+                                        else
+                                            filters.pregnancyStatuses + status
+                                )
                             }
                         )
                     }
@@ -276,14 +338,21 @@ fun FilterScreen(
                 ) {
                     RangeFilter(
                         modifier = Modifier.fillMaxWidth(), // 👈 important
+
                         label = "Weight",
                         min = 0,
                         max = 9000,
-                        valueFrom = weightFrom.toInt(),
-                        valueTo = weightTo.replace(",", "").toInt(),
+                        valueFrom = weight.min,
+                        valueTo = weight.max,
+                        modified = weight.filterSet,
                         onValueChange = { from, to ->
-                            weightFrom = from.toString()
-                            weightTo = to.toString()
+                            filters = filters.copy(
+                                weight = RangeFilterState(
+                                    min = from,
+                                    max = to,
+                                    filterSet = true
+                                )
+                            )
                         }
                     )
                 }
@@ -292,16 +361,22 @@ fun FilterScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     RangeFilter(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(), // 👈 important
+
                         label = "Milk Yield",
                         min = 0,
                         max = 900,
-                        valueFrom = milkYieldFrom.toInt(),
-                        valueTo = milkYieldTo.replace(",", "").toInt(),
-                        showSlider = true,
+                        valueFrom = milkYield.min,
+                        valueTo = milkYield.max,
+                        modified = milkYield.filterSet,
                         onValueChange = { from, to ->
-                            milkYieldFrom = from.toString()
-                            milkYieldTo = to.toString()
+                            filters = filters.copy(
+                                milkYield = RangeFilterState(
+                                    min = from,
+                                    max = to,
+                                    filterSet = true
+                                )
+                            )
                         }
                     )
                 }
@@ -321,18 +396,21 @@ fun FilterScreen(
                     // FROM
                     DropdownInput(
                         label = "Calving Number",
-                        selected = calvingFrom.toString(),
+                        selected = calving.min.toString(),
                         options = calvingFromOptions,
                         expanded = calvingFromExpanded,
                         onExpandedChange = { calvingFromExpanded = it },
                         onSelect = { value ->
                             val newFrom = value.toInt()
-                            calvingFrom = newFrom
+                            val newTo = maxOf(calving.max, newFrom)
 
-                            // 👇 enforce invariant
-                            if (calvingTo < newFrom) {
-                                calvingTo = newFrom
-                            }
+                            filters = filters.copy(
+                                calving = RangeFilterState(
+                                    min = newFrom,
+                                    max = newTo,
+                                    filterSet = true
+                                )
+                            )
 
                             calvingFromExpanded = false
                         },
@@ -348,12 +426,21 @@ fun FilterScreen(
 
                     // TO
                     DropdownInput(
-                        selected = calvingTo.toString(),
+                        selected = calving.max.toString(),
                         options = calvingToOptions, // 👈 constrained options
                         expanded = calvingToExpanded,
                         onExpandedChange = { calvingToExpanded = it },
                         onSelect = { value ->
-                            calvingTo = value.toInt()
+                            val newTo = value.toInt()
+                            val newFrom = minOf(calving.min, newTo)
+
+                            filters = filters.copy(
+                                calving = RangeFilterState(
+                                    min = newFrom,
+                                    max = newTo,
+                                    filterSet = true
+                                )
+                            )
                             calvingToExpanded = false
                         },
                         placeholder = "To",
@@ -372,7 +459,7 @@ fun FilterScreen(
             ) {
                 // Submit Button
                 Button(
-                    onClick = onSubmitClick,
+                    onClick = { onSubmitClick(filters) },
                     modifier = Modifier
                         .width(173.dp)
                         .height(50.dp),
@@ -414,6 +501,20 @@ fun FilterScreen(
             }
         }
     }
+    if (showWishlistOverlay) {
+        WishlistNameOverlay(
+            onDismiss = { showWishlistOverlay = false },
+            onSave = { name ->
+                WishlistStore.add(
+                    WishlistEntry(
+                        name = name,
+                        filters = filters
+                    )
+                )
+                showWishlistOverlay = false
+            }
+        )
+    }
 }
 
 @Composable
@@ -438,7 +539,8 @@ fun PregnancyStatusChip(
             .clickable(
                 indication = LocalIndication.current,
                 interactionSource = remember { MutableInteractionSource() },
-            onClick = onClick)
+                onClick = onClick
+            )
             .padding(horizontal = 12.dp),
         contentAlignment = Alignment.Center
     ) {

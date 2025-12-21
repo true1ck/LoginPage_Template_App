@@ -27,6 +27,7 @@ fun RangeFilter(
     max: Int,
     valueFrom: Int,
     valueTo: Int,
+    modified: Boolean = false,
     onValueChange: (from: Int, to: Int) -> Unit,
     showSlider: Boolean = true,
     valueFormatter: (Int) -> String = { it.toString() }
@@ -75,6 +76,7 @@ fun RangeFilter(
             RangePill(
                 modifier = Modifier.weight(1f),
                 value = fromValue,
+                modified = modified,
                 onValueChange = { newFrom ->
                     val safeFrom = newFrom.coerceIn(min, toValue)
                     fromValue = safeFrom
@@ -88,6 +90,7 @@ fun RangeFilter(
             RangePill(
                 modifier = Modifier.weight(1f),
                 value = toValue,
+                modified = modified,
                 onValueChange = { newTo ->
                     val safeTo = newTo.coerceIn(fromValue, max)
                     toValue = safeTo
@@ -104,6 +107,7 @@ fun RangeFilter(
 private fun RangePill(
     modifier: Modifier = Modifier,
     value: Int,
+    modified: Boolean = false,
     onValueChange: (Int) -> Unit,
     formatter: (Int) -> String
 ) {
@@ -119,6 +123,7 @@ private fun RangePill(
             .padding(horizontal = 8.dp),
         contentAlignment = Alignment.Center
     ) {
+        var modified = modified;
         BasicTextField(
             value = text,
             onValueChange = { input ->
@@ -129,7 +134,7 @@ private fun RangePill(
             singleLine = true,
             textStyle = TextStyle(
                 fontSize = 14.sp,
-                color = Color(0xFF99A1AF)
+                color = if(modified) Color.Black else Color(0xFF99A1AF)
             ),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )

@@ -27,6 +27,7 @@ class UserNotFoundException(
 
 class AuthApiClient(private val context: Context) {
 
+    private val route = "http://10.0.2.2:3000/"
     private val tokenManager = TokenManager(context)
 
     val client = HttpClient(CIO) {
@@ -64,7 +65,7 @@ class AuthApiClient(private val context: Context) {
                     
                     android.util.Log.d("AuthApiClient", "refreshTokens: Calling /auth/refresh endpoint")
                     try {
-                        val response: RefreshResponse = client.post("http://10.0.2.2:3000/auth/refresh") {
+                        val response: RefreshResponse = client.post("${route}auth/refresh") {
                             markAsRefreshTokenRequest()
                             contentType(ContentType.Application.Json)
                             setBody(RefreshRequest(refreshToken))
@@ -84,7 +85,7 @@ class AuthApiClient(private val context: Context) {
         }
 
         defaultRequest {
-            url("http://10.0.2.2:3000/")
+            url(route)
         }
     }
 
