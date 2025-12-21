@@ -31,6 +31,7 @@ fun DropdownInput(
     onExpandedChange: (Boolean) -> Unit,
     onSelect: (String) -> Unit,
     placeholder: String = "Select",        // NEW - custom placeholder
+    textColor: Color = Color.Black,
     modifier: Modifier = Modifier          // NEW - allows width control
 ) {
     Column(
@@ -38,17 +39,17 @@ fun DropdownInput(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         // Optional label
-        if (label != null) {
+//        if (label != null) {
             Text(
-                text = label,
+                text = label?:" ",
                 fontSize = AppTypography.Body,
                 fontWeight = FontWeight.Medium,
                 color = FarmTextDark
             )
-        } else {
-            // Reserve label space so layout doesn’t shift
-            Spacer(modifier = Modifier.height(20.dp))  // ← same height as label text line
-        }
+//        } else {
+//            // Reserve label space so layout doesn’t shift
+//            Spacer(modifier = Modifier.height(20.dp))  // ← same height as label text line
+//        }
 
         ExposedDropdownMenuBox(
             expanded = expanded,
@@ -82,7 +83,7 @@ fun DropdownInput(
                     Text(
                         text = selected.ifEmpty { placeholder },
                         fontSize = AppTypography.Body,
-                        color = if (selected.isEmpty()) Color(0xFF99A1AF) else FarmTextDark
+                        color = if (selected.isEmpty()) Color(0xFF99A1AF) else textColor
                     )
 
                     Icon(

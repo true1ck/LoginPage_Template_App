@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -61,7 +62,7 @@ fun BottomNavigationBar(
 @Composable
 fun BottomNavItem(
     label: String,
-    iconRes: Int,
+    iconRes: Any,
     selected: Boolean,
     onClick: () -> Unit = {}
 ) {
@@ -77,12 +78,21 @@ fun BottomNavItem(
                 interactionSource = remember { MutableInteractionSource() },
                 onClick = onClick)
     ) {
-        Icon(
-            painter = painterResource(iconRes),
-            contentDescription = label,
-            tint = color,
-            modifier = Modifier.size(24.dp)
-        )
+        if(iconRes is Int) {
+            Icon(
+                painter = painterResource(iconRes),
+                contentDescription = label,
+                tint = color,
+                modifier = Modifier.size(24.dp)
+            )
+        } else if(iconRes is ImageVector) {
+            Icon(
+                imageVector = iconRes,
+                contentDescription = label,
+                tint = color,
+                modifier = Modifier.size(24.dp)
+            )
+        }
         Text(
             text = label,
             fontSize = 12.sp,

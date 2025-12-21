@@ -27,6 +27,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.livingai_lg.ui.layout.BottomNavScaffold
+import com.example.livingai_lg.ui.models.chatBottomNavItems
 
 data class CallRecord(
     val id: String,
@@ -101,34 +103,41 @@ fun CallsScreen(
             .fillMaxSize()
             .background(Color(0xFFFCFBF8))
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            CallsHeader(
-                onBackClick = onBackClick,
-                onCallClick = onCallClick,
-                onMenuClick = onMenuClick
-            )
+        BottomNavScaffold(
+            items = chatBottomNavItems,
+            currentItem = "Calls",
+            onBottomNavItemClick = onTabClick,
+        ) { paddingValues ->
 
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+            Column(
+                modifier = Modifier.fillMaxSize().padding(paddingValues)
             ) {
-                items(callHistory) { call ->
-                    CallHistoryItem(
-                        call = call,
-                        onClick = { onCallItemClick(call.id) }
-                    )
-                }
-            }
+                CallsHeader(
+                    onBackClick = onBackClick,
+                    onCallClick = onCallClick,
+                    onMenuClick = onMenuClick
+                )
 
-            ContactsBottomNav(
-                currentTab = ContactsTab.CALLS,
-                onTabClick = onTabClick
-            )
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(callHistory) { call ->
+                        CallHistoryItem(
+                            call = call,
+                            onClick = { onCallItemClick(call.id) }
+                        )
+                    }
+                }
+
+//                ContactsBottomNav(
+//                    currentTab = ContactsTab.CALLS,
+//                    onTabClick = onTabClick
+//                )
+            }
         }
     }
 }

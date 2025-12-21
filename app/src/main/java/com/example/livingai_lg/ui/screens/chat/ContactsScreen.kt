@@ -34,6 +34,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.livingai_lg.ui.layout.BottomNavScaffold
+import com.example.livingai_lg.ui.models.chatBottomNavItems
+import com.example.livingai_lg.ui.models.mainBottomNavItems
 import com.example.livingai_lg.ui.navigation.AppScreen
 
 data class Contact(
@@ -122,34 +125,41 @@ fun ContactsScreen(
             .fillMaxSize()
             .background(Color(0xFFFCFBF8))
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            ContactsHeader(
-                onBackClick = onBackClick,
-                onSearchClick = onSearchClick,
-                onMenuClick = onMenuClick
-            )
+        BottomNavScaffold(
+            items = chatBottomNavItems,
+            currentItem = "Contacts",
+            onBottomNavItemClick = onTabClick,
+        ) { paddingValues ->
 
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
+            Column(
+                modifier = Modifier.fillMaxSize().padding(paddingValues)
             ) {
-                items(contacts) { contact ->
-                    ContactItem(
-                        contact = contact,
-                        onContactClick = { onContactClick(contact.id) },
-                        onCallClick = { onCallClick(contact.id) },
-                        onMessageClick = { onMessageClick(contact.id) }
-                    )
-                }
-            }
+                ContactsHeader(
+                    onBackClick = onBackClick,
+                    onSearchClick = onSearchClick,
+                    onMenuClick = onMenuClick
+                )
 
-            ContactsBottomNav(
-                currentTab = ContactsTab.CONTACTS,
-                onTabClick = onTabClick
-            )
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                ) {
+                    items(contacts) { contact ->
+                        ContactItem(
+                            contact = contact,
+                            onContactClick = { onContactClick(contact.id) },
+                            onCallClick = { onCallClick(contact.id) },
+                            onMessageClick = { onMessageClick(contact.id) }
+                        )
+                    }
+                }
+
+//                ContactsBottomNav(
+//                    currentTab = ContactsTab.CONTACTS,
+//                    onTabClick = onTabClick
+//                )
+            }
         }
     }
 }

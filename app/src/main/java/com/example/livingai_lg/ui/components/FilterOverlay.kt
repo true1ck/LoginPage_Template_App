@@ -18,13 +18,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.example.livingai_lg.ui.models.FiltersState
 import com.example.livingai_lg.ui.screens.FilterScreen
 
 @Composable
 fun FilterOverlay(
     visible: Boolean,
+    appliedFilters: FiltersState,
     onDismiss: () -> Unit,
-    onSubmitClick: () -> Unit = {},
+    onSubmitClick: (filters: FiltersState) -> Unit = {},
 ) {
     BackHandler(enabled = visible) { onDismiss() }
 
@@ -62,10 +64,11 @@ fun FilterOverlay(
                 .align(Alignment.CenterEnd)
         ) {
             FilterScreen(
+                appliedFilters,
                 onBackClick = onDismiss,
                 onCancelClick = onDismiss,
-                onSubmitClick = {
-                    onSubmitClick()
+                onSubmitClick = { filters ->
+                    onSubmitClick(filters)
                     onDismiss()
                 }
             )

@@ -27,6 +27,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.farmmarketplace.ui.screens.ContactsBottomNav
 import com.example.farmmarketplace.ui.screens.ContactsTab
+import com.example.livingai_lg.ui.layout.BottomNavScaffold
+import com.example.livingai_lg.ui.models.chatBottomNavItems
 
 data class ChatPreview(
     val id: String,
@@ -108,34 +110,40 @@ fun ChatsScreen(
             .fillMaxSize()
             .background(Color(0xFFFCFBF8))
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            ChatsHeader(
-                onBackClick = onBackClick,
-                onNewChatClick = onNewChatClick,
-                onMenuClick = onMenuClick
-            )
-
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+        BottomNavScaffold(
+            items = chatBottomNavItems,
+            currentItem = "Chats",
+            onBottomNavItemClick = onTabClick,
+        ) { paddingValues ->
+            Column(
+                modifier = Modifier.fillMaxSize().padding(paddingValues)
             ) {
-                items(chatList) { chat ->
-                    ChatListItem(
-                        chat = chat,
-                        onClick = { onChatItemClick(chat.id) }
-                    )
-                }
-            }
+                ChatsHeader(
+                    onBackClick = onBackClick,
+                    onNewChatClick = onNewChatClick,
+                    onMenuClick = onMenuClick
+                )
 
-            ContactsBottomNav(
-                currentTab = ContactsTab.CHATS,
-                onTabClick = onTabClick
-            )
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(chatList) { chat ->
+                        ChatListItem(
+                            chat = chat,
+                            onClick = { onChatItemClick(chat.id) }
+                        )
+                    }
+                }
+
+//                ContactsBottomNav(
+//                    currentTab = ContactsTab.CHATS,
+//                    onTabClick = onTabClick
+//                )
+            }
         }
     }
 }

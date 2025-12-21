@@ -22,10 +22,10 @@ import com.example.livingai_lg.ui.models.AnimalType
 @Composable
 fun AnimalTypeSelector(
     animalTypes: List<AnimalType>,
-    selectedAnimalType: MutableState<String?>,
+    selectedAnimalType: String?,
     onAnimalTypeSelected: (String) -> Unit
 ) {
-    val selectedAnimalType: String = selectedAnimalType.value ?: ""
+    val selectedAnimalType: String = selectedAnimalType ?: ""
 
     LazyRow(
         modifier = Modifier
